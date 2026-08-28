@@ -14,7 +14,7 @@
   };
 
   Dino.bossMaxHp = function (actualScore) {
-    return Math.max(1, Math.floor(actualScore || 0));
+    return Math.max(1, Math.floor((actualScore || 0) / 10));
   };
 
   Dino.bossScale = function (difficulty, jitter) {

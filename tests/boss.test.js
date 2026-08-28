@@ -19,12 +19,13 @@ test("dificuldade do boss sobe com pontos/1000", function () {
   assert.ok(Dino.bossChargeSpeed(12) > Dino.bossChargeSpeed(5));
 });
 
-test("vida do boss é igual à pontuação atual", function () {
-  assert.equal(Dino.bossMaxHp(5000), 5000);
-  assert.equal(Dino.bossMaxHp(12000), 12000);
+test("vida do boss é a pontuação atual dividida por 10", function () {
+  assert.equal(Dino.bossMaxHp(5000), 500);
+  assert.equal(Dino.bossMaxHp(12000), 1200);
+  assert.equal(Dino.bossMaxHp(9), 1);
   var fight = Dino.createBossFight(600, 5000, function () { return 0; });
-  assert.equal(fight.boss.hp, 5000);
-  assert.equal(fight.boss.maxHp, 5000);
+  assert.equal(fight.boss.hp, 500);
+  assert.equal(fight.boss.maxHp, 500);
 });
 
 test("boss sorteado é maior e nasce à direita", function () {
