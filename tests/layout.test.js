@@ -28,3 +28,10 @@ test("viewHeight chega no rodapé da janela em coords lógicas", function () {
   var bottom = l.offsetY + l.viewHeight * l.scale;
   assert.ok(Math.abs(bottom - 1080) < l.scale);
 });
+
+test("HUD fica no topo da página, separado do recuo do jogo", function () {
+  var l = Dino.computeLayout(1920, 1080);
+  assert.equal(l.hudOffsetY, 8);
+  assert.ok(l.hudOffsetY < 16);
+  assert.ok(l.hudOffsetY < l.offsetY);
+});

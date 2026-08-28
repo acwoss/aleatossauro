@@ -258,7 +258,7 @@
     Dino.drawRects(ctx, rects, x, y, color);
   };
 
-  Hud.prototype.draw = function (ctx, logicalWidth, palette, crashed) {
+  Hud.prototype.drawChrome = function (ctx, logicalWidth, palette) {
     var dest = 11;
     var y = 5;
     var i;
@@ -301,7 +301,7 @@
     }
     items = Dino.kitHudItems ? Dino.kitHudItems(this.kit) : [];
     slots = Dino.hudIconLayout(items, 6, 3, Math.max(40, iconMax));
-    if (slots.length && !this.choice) {
+    if (slots.length) {
       ctx.save();
       ctx.font = "7px Courier New, monospace";
       ctx.textAlign = "left";
@@ -316,13 +316,14 @@
       ctx.restore();
       statsY = slots[slots.length - 1].y + 14;
     }
-    if (!this.choice) {
-      stats = Dino.rpgStats
-        ? Dino.rpgStats(this.kit, { speed: this.speed })
-        : { str: 1, spd: 6, hp: 1, hpMax: 1, jump: 1, int: 1 };
-      var statCard = this.drawRpgStats(ctx, 6, statsY, stats, palette);
-      statsY = statCard.y + statCard.h + 6;
-    }
+    stats = Dino.rpgStats
+      ? Dino.rpgStats(this.kit, { speed: this.speed })
+      : { str: 1, spd: 6, hp: 1, hpMax: 1, jump: 1, int: 1 };
+    this.drawRpgStats(ctx, 6, statsY, stats, palette);
+  };
+
+  Hud.prototype.drawOverlay = function (ctx, logicalWidth, palette, crashed) {
+    var ink = palette.hud;
     if (crashed) {
       ctx.save();
       ctx.fillStyle = ink;
@@ -345,15 +346,20 @@
       ctx.font = "bold 11px Courier New, monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(this.toast, logicalWidth / 2, statsY + 22);
+      ctx.fillText(this.toast, logicalWidth / 2, 18);
       ctx.restore();
     }
     if (this.boss && !this.choice) {
-      this.drawBoss(ctx, logicalWidth, palette, statsY + 12);
+      this.drawBoss(ctx, logicalWidth, palette, 8);
     }
     if (this.choice && this.choice.options && this.choice.options.length) {
       this.drawChoice(ctx, logicalWidth, palette);
     }
+  };
+
+  Hud.prototype.draw = function (ctx, logicalWidth, palette, crashed) {
+    this.drawChrome(ctx, logicalWidth, palette);
+    this.drawOverlay(ctx, logicalWidth, palette, crashed);
   };
 
   Hud.prototype.drawRpgStats = function (ctx, x, y, stats, palette) {

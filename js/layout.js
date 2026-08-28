@@ -4,11 +4,13 @@
     var scale = Dino.clamp(innerWidth / 600, 1, innerHeight * 0.45 / 150);
     var leftover = innerHeight - Dino.DEFAULT_HEIGHT * scale;
     var offsetY = Math.round(Math.max(0, leftover) * 2 / 3);
+    var hudOffsetY = 8;
     return {
       scale: scale,
       logicalWidth: Math.round(innerWidth / scale),
       logicalHeight: Dino.DEFAULT_HEIGHT,
       offsetY: offsetY,
+      hudOffsetY: hudOffsetY,
       viewHeight: (innerHeight - offsetY) / scale
     };
   };

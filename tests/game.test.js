@@ -251,6 +251,41 @@ test("blaster só atira com firePressed", function () {
   assert.ok(g.bolts.length >= 1);
 });
 
+test("score e atributos são desenhados no topo da página", function () {
+  var transforms = [];
+  var ctx = {
+    setTransform: function () { transforms.push([].slice.call(arguments)); },
+    save: function () {},
+    restore: function () {},
+    translate: function () {},
+    scale: function () {},
+    fillRect: function () {},
+    strokeRect: function () {},
+    fillText: function () {},
+    fillStyle: "",
+    strokeStyle: "",
+    font: "",
+    textAlign: "",
+    textBaseline: "",
+    globalAlpha: 1,
+    lineWidth: 1,
+    imageSmoothingEnabled: false
+  };
+  var g = Dino.createGameState({ innerWidth: 1920, innerHeight: 1080 });
+  g.draw(ctx, 1920, 1080, 1);
+  var playY = g.layout.offsetY;
+  var hudY = g.layout.hudOffsetY;
+  assert.ok(transforms.some(function (t) { return t[5] === playY; }));
+  assert.ok(transforms.some(function (t) { return t[5] === hudY; }));
+  var lastHud = -1;
+  var lastPlay = -1;
+  transforms.forEach(function (t, i) {
+    if (t[5] === playY) lastPlay = i;
+    if (t[5] === hudY) lastHud = i;
+  });
+  assert.ok(lastHud > lastPlay);
+});
+
 test("ataque no boss causa a força do kit", function () {
   var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
   g.startBoss();

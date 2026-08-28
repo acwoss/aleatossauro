@@ -617,12 +617,21 @@
     this.tRex.immuneMs = this.immuneMs;
     this.tRex.draw(ctx, colors);
     this.hud.speed = this.currentSpeed;
-    this.hud.draw(
+    this.hud.drawOverlay(
       ctx,
       this.layout.logicalWidth,
       colors,
       this.status === "CRASHED"
     );
+    ctx.setTransform(
+      dpr * scale,
+      0,
+      0,
+      dpr * scale,
+      0,
+      (this.layout.hudOffsetY || 8) * dpr
+    );
+    this.hud.drawChrome(ctx, this.layout.logicalWidth, colors);
   };
 
   Game.prototype.resize = function (innerWidth, innerHeight) {
