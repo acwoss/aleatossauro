@@ -23,3 +23,25 @@ html, body {
 #unsupported.is-visible {
   display: block;
 }
+.atk-btn {
+  display: none;
+  position: fixed;
+  right: 18px;
+  bottom: 22px;
+  z-index: 2;
+  min-width: 88px;
+  min-height: 52px;
+  padding: 10px 14px;
+  border: 3px solid #1e3a4c;
+  border-radius: 12px;
+  background: #e2b007;
+  color: #1e3a4c;
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  touch-action: manipulation;
+}
+.atk-btn.is-visible {
+  display: block;
+}

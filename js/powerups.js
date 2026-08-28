@@ -16,7 +16,18 @@
     { id: "clock", label: "RELÓGIO" },
     { id: "ghost", label: "FANTASMA" },
     { id: "balloon", label: "BALÃO" },
-    { id: "gravity", label: "GRAVIDADE" }
+    { id: "gravity", label: "GRAVIDADE" },
+    { id: "sword", label: "ESPADA" },
+    { id: "spear", label: "LANÇA" },
+    { id: "heart", label: "CORAÇÃO" },
+    { id: "boots", label: "BOTAS FOGUETE" },
+    { id: "ice", label: "GELO" },
+    { id: "chili", label: "PIMENTA" },
+    { id: "crystal", label: "CRISTAL" },
+    { id: "cloak", label: "MANTO" },
+    { id: "quake", label: "TERREMOTO" },
+    { id: "horn", label: "CHIFRE" },
+    { id: "star", label: "ESTRELA" }
   ];
 
   Dino.createPowerKit = function () {
@@ -36,6 +47,17 @@
       ghosts: 0,
       balloon: 0,
       gravity: 0,
+      sword: 0,
+      spear: 0,
+      hearts: 0,
+      boots: 0,
+      ice: 0,
+      chili: 0,
+      crystal: 0,
+      cloak: 0,
+      quake: 0,
+      horn: 0,
+      stars: 0,
       owned: []
     };
   };
@@ -97,6 +119,39 @@
         break;
       case "gravity":
         kit.gravity += 1;
+        break;
+      case "sword":
+        kit.sword += 1;
+        break;
+      case "spear":
+        kit.spear += 1;
+        break;
+      case "heart":
+        kit.hearts += 1;
+        break;
+      case "boots":
+        kit.boots += 1;
+        break;
+      case "ice":
+        kit.ice += 1;
+        break;
+      case "chili":
+        kit.chili += 1;
+        break;
+      case "crystal":
+        kit.crystal += 1;
+        break;
+      case "cloak":
+        kit.cloak += 1;
+        break;
+      case "quake":
+        kit.quake += 1;
+        break;
+      case "horn":
+        kit.horn += 1;
+        break;
+      case "star":
+        kit.stars += 1;
         break;
       default:
         break;
@@ -168,6 +223,28 @@
         return kit.balloon || 0;
       case "gravity":
         return kit.gravity || 0;
+      case "sword":
+        return kit.sword || 0;
+      case "spear":
+        return kit.spear || 0;
+      case "heart":
+        return kit.hearts || 0;
+      case "boots":
+        return kit.boots || 0;
+      case "ice":
+        return kit.ice || 0;
+      case "chili":
+        return kit.chili || 0;
+      case "crystal":
+        return kit.crystal || 0;
+      case "cloak":
+        return kit.cloak || 0;
+      case "quake":
+        return kit.quake || 0;
+      case "horn":
+        return kit.horn || 0;
+      case "star":
+        return kit.stars || 0;
       default:
         return 0;
     }
@@ -181,6 +258,20 @@
     if (kit.ghosts > 0) {
       kit.ghosts -= 1;
       return "ghost";
+    }
+    if (kit.hearts > 0) {
+      kit.hearts -= 1;
+      return "heart";
+    }
+    if (
+      kit.horn > 0 &&
+      obstacle &&
+      obstacle.typeConfig &&
+      (obstacle.typeConfig.type === "cactusSmall" ||
+        obstacle.typeConfig.type === "cactusLarge")
+    ) {
+      kit.horn -= 1;
+      return "horn";
     }
     if (kit.titan && obstacle && obstacle.typeConfig && obstacle.typeConfig.type === "cactusSmall") {
       return "stomp";
@@ -204,7 +295,9 @@
       skates: [],
       hats: [],
       gun: null,
-      shield: null
+      shield: null,
+      sword: null,
+      spear: null
     };
     if (kit.wings > 0) {
       gear.wings.push({
@@ -246,17 +339,30 @@
         y: yPos + (ducking ? 20 : 8)
       };
     }
+    if (kit.sword > 0) {
+      gear.sword = {
+        x: xPos + (ducking ? 48 : 34),
+        y: yPos + (ducking ? 18 : 16)
+      };
+    }
+    if (kit.spear > 0) {
+      gear.spear = {
+        x: xPos + (ducking ? 46 : 32),
+        y: yPos + (ducking ? 22 : 18)
+      };
+    }
     return gear;
   };
 
   Dino.scoreMultiplier = function (kit) {
-    return 1 + (kit.coffee || 0);
+    return 1 + (kit.coffee || 0) + (kit.crystal || 0);
   };
 
   Dino.worldSpeedFactor = function (kit) {
     var f = 1;
     var i;
     for (i = 0; i < (kit.clock || 0); i++) f *= 0.72;
+    for (i = 0; i < (kit.ice || 0); i++) f *= 0.8;
     return f;
   };
 
@@ -275,6 +381,10 @@
     }
     if (kit.hats) jump -= 0.8 * kit.hats;
     if (kit.skate) jump -= 0.4 * kit.skate;
+    if (kit.chili) {
+      jump -= 2.4 * kit.chili;
+      minH += 6 * kit.chili;
+    }
     tRex.config.gravity = gravity;
     tRex.config.initialJumpVelocity = jump;
     tRex.config.maxJumpHeight = maxH;
@@ -297,13 +407,15 @@
   Dino.blasterMuzzle = function (tRex) {
     var s = tRex.drawScale || 1;
     var ducking = tRex.ducking;
+    var face = tRex.facing || 1;
     var fx = tRex.xPos;
     var fy = Dino.drawFeetY(tRex);
-    var gx = tRex.xPos + (ducking ? 68 : 54);
+    var gx = face < 0 ? tRex.xPos - 10 : tRex.xPos + (ducking ? 68 : 54);
     var gy = tRex.yPos + (ducking ? 31 : 23);
     return {
       x: fx + (gx - fx) * s,
-      y: fy + (gy - fy) * s
+      y: fy + (gy - fy) * s,
+      vx: face < 0 ? -1 : 1
     };
   };
 
@@ -311,7 +423,54 @@
     if (!kit || kit.blaster <= 0) return null;
     kit.blaster -= 1;
     var m = Dino.blasterMuzzle(tRex);
-    return Dino.createBolt(m.x, m.y);
+    return Dino.createBolt(m.x, m.y, m.vx);
+  };
+
+  Dino.canAttack = function (kit) {
+    return !!(
+      kit &&
+      ((kit.blaster || 0) > 0 ||
+        (kit.sword || 0) > 0 ||
+        (kit.spear || 0) > 0 ||
+        (kit.quake || 0) > 0)
+    );
+  };
+
+  Dino.meleeBox = function (tRex, reach) {
+    var face = tRex.facing || 1;
+    var w = (tRex.config && tRex.config.width) || 44;
+    var x = face < 0 ? tRex.xPos - reach : tRex.xPos + w;
+    return {
+      x: x,
+      y: tRex.yPos + 8,
+      width: reach,
+      height: 30
+    };
+  };
+
+  Dino.attackHitboxes = function (kit, tRex) {
+    var boxes = [];
+    if (!kit || !tRex) return boxes;
+    if (kit.sword > 0) boxes.push(Dino.meleeBox(tRex, 24 + 8 * kit.sword));
+    if (kit.spear > 0) boxes.push(Dino.meleeBox(tRex, 40 + 10 * kit.spear));
+    if (kit.quake > 0) {
+      boxes.push({
+        x: tRex.xPos - 18,
+        y: tRex.yPos + 22,
+        width: 80,
+        height: 28
+      });
+    }
+    return boxes;
+  };
+
+  Dino.slashHitsBox = function (boxes, target) {
+    var i;
+    if (!boxes || !target) return false;
+    for (i = 0; i < boxes.length; i++) {
+      if (Dino.boxCompare(boxes[i], target)) return true;
+    }
+    return false;
   };
 
   Dino.applyBoltHit = function (obstacle) {
@@ -405,13 +564,21 @@
     if (pickup.xPos + pickup.width < 0) pickup.remove = true;
   };
 
-  Dino.createBolt = function (x, y) {
-    return { xPos: x, yPos: y, width: 10, height: 4, remove: false };
+  Dino.createBolt = function (x, y, vx) {
+    return {
+      xPos: x,
+      yPos: y,
+      width: 10,
+      height: 4,
+      vx: vx == null || vx === 0 ? 1 : vx,
+      remove: false
+    };
   };
 
   Dino.updateBolt = function (bolt, dt) {
-    bolt.xPos += (18 * Dino.FPS / 1000) * dt;
-    if (bolt.xPos > 2000) bolt.remove = true;
+    var dir = bolt.vx == null ? 1 : bolt.vx;
+    bolt.xPos += (18 * Dino.FPS / 1000) * dt * dir;
+    if (bolt.xPos > 2000 || bolt.xPos + bolt.width < -40) bolt.remove = true;
   };
 
   Dino.boltHitsObstacle = function (bolt, obstacle) {

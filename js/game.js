@@ -40,6 +40,8 @@
     this.bolts = [];
     this.blasterTimer = 0;
     this.immuneMs = 0;
+    this.attackCd = 0;
+    this.attackBtn = null;
     this.tRex.powerKit = this.kit;
     this.hud.kit = this.kit;
     this.choice = null;
@@ -54,6 +56,7 @@
     this.pickups = [];
     this.bolts = [];
     this.blasterTimer = 0;
+    this.attackCd = 0;
     this.tRex.powerKit = this.kit;
     this.hud.kit = this.kit;
     Dino.syncTrexFromKit(this.tRex, this.kit);
@@ -74,6 +77,7 @@
     this.horizon.setViewHeight(this.layout.viewHeight);
     this.tRex.reset();
     this.tRex.xPos = Dino.Config.startXPos;
+    this.tRex.facing = 1;
     this.hud.reset();
     this.resetKit();
     this.choice = null;
@@ -81,6 +85,7 @@
     this.fight = null;
     this.hud.boss = null;
     this.immuneMs = 0;
+    this.attackCd = 0;
     this.status = "RUNNING";
   };
 
@@ -168,10 +173,14 @@
     if (effect.id === "skate") {
       this.currentSpeed += 0.7;
     }
+    if (effect.id === "boots") {
+      this.currentSpeed += 0.9;
+    }
     this.hud.announce(effect.label);
     this.choice = null;
     this.hud.choice = null;
     this.immuneMs = Dino.Config.choiceIframes;
+    if (effect.id === "star") this.immuneMs += 1500;
     this.status = "RUNNING";
   };
 
@@ -203,6 +212,7 @@
     this.pickups = [];
     this.bolts = [];
     this.tRex.xPos = 32;
+    this.tRex.facing = 1;
     this.tRex.yPos = this.tRex.groundYPos;
     this.tRex.jumping = false;
     this.tRex.jumpVelocity = 0;
@@ -217,6 +227,7 @@
     this.fight = null;
     this.hud.boss = null;
     this.tRex.xPos = Dino.Config.startXPos;
+    this.tRex.facing = 1;
     this.tRex.yPos = this.tRex.groundYPos;
     this.immuneMs = Dino.Config.choiceIframes;
     this.hud.announce("BOSS DERROTADO");
@@ -263,6 +274,9 @@
     );
     if (input.jumpPressed) {
       this.tRex.startJump(Dino.Config.speed);
+      if (this.tRex.jumping && this.kit.cloak > 0) {
+        this.immuneMs = Math.max(this.immuneMs, 300 * this.kit.cloak);
+      }
     }
     if (input.duck && this.tRex.jumping) {
       this.tRex.setSpeedDrop();
@@ -275,14 +289,14 @@
       this.tRex.updateJump(dt);
     }
     this.tRex.update(dt);
-    this.updateBlaster(dt);
+    this.updateBlaster(dt, input.firePressed);
     var i;
     var bolt;
     for (i = 0; i < this.bolts.length; i++) {
       bolt = this.bolts[i];
       if (Dino.boltHitsBoss(bolt, this.fight.boss)) {
         bolt.remove = true;
-        Dino.hurtBoss(this.fight.boss, 1);
+        Dino.hurtBoss(this.fight.boss, Dino.bossAttackDamage(this.kit));
       }
     }
     this.bolts = this.bolts.filter(function (b) {
@@ -297,7 +311,7 @@
     );
     this.fight.shots = Dino.updateBossShots(this.fight.shots || [], dt);
     if (Dino.bossStompHit(this.tRex, this.fight.boss)) {
-      Dino.hurtBoss(this.fight.boss, 1);
+      Dino.hurtBoss(this.fight.boss, Dino.bossAttackDamage(this.kit));
       this.tRex.update(0, Dino.TrexStatus.JUMPING);
       this.tRex.jumpVelocity = -8;
       this.tRex.jumping = true;
@@ -321,21 +335,65 @@
       this.fight.winMs = (this.fight.winMs || 0) + dt;
       if (this.fight.winMs >= 480) this.endBoss();
     }
+    this.syncAttackButton();
   };
 
-  Game.prototype.updateBlaster = function (dt) {
+  Game.prototype.tryAttack = function () {
+    if (this.attackCd > 0) return;
+    if (!Dino.canAttack(this.kit)) return;
+    this.attackCd = Dino.Config.attackCooldown || 260;
+    this.tRex.slashMs = 180;
+    var boxes = Dino.attackHitboxes(this.kit, this.tRex);
     var i;
-    var j;
-    var bolt;
-    if (this.kit.blaster > 0) {
-      this.blasterTimer += dt;
-      if (this.blasterTimer >= Dino.Config.blasterInterval) {
-        this.blasterTimer = 0;
-        bolt = Dino.fireBlaster(this.kit, this.tRex);
-        if (bolt) this.bolts.push(bolt);
-        Dino.syncTrexFromKit(this.tRex, this.kit);
+    var o;
+    for (i = 0; i < this.obstacles.length; i++) {
+      o = this.obstacles[i];
+      if (o.remove) continue;
+      if (
+        Dino.slashHitsBox(boxes, {
+          x: o.xPos,
+          y: o.yPos,
+          width: o.width,
+          height: o.typeConfig.height
+        })
+      ) {
+        Dino.applyBoltHit(o);
       }
     }
+    if (
+      this.fight &&
+      this.fight.boss &&
+      Dino.slashHitsBox(boxes, Dino.bossBox(this.fight.boss))
+    ) {
+      Dino.hurtBoss(this.fight.boss, Dino.bossAttackDamage(this.kit));
+    }
+    var bolt = Dino.fireBlaster(this.kit, this.tRex);
+    if (bolt) this.bolts.push(bolt);
+    Dino.syncTrexFromKit(this.tRex, this.kit);
+  };
+
+  Game.prototype.syncAttackButton = function () {
+    if (!this.attackBtn) return;
+    var show =
+      this.isMobile &&
+      Dino.canAttack(this.kit) &&
+      (this.status === "RUNNING" || this.status === "BOSS");
+    this.attackBtn.className = show ? "atk-btn is-visible" : "atk-btn";
+    if (this.kit.blaster > 0 && !this.kit.sword && !this.kit.spear) {
+      this.attackBtn.textContent = "ATIRAR";
+    } else {
+      this.attackBtn.textContent = "ATACAR";
+    }
+  };
+
+  Game.prototype.updateBlaster = function (dt, firePressed) {
+    var i;
+    var j;
+    if (this.attackCd > 0) this.attackCd = Math.max(0, this.attackCd - dt);
+    if (this.tRex.slashMs > 0) {
+      this.tRex.slashMs = Math.max(0, this.tRex.slashMs - dt);
+    }
+    if (firePressed) this.tryAttack();
     for (i = 0; i < this.bolts.length; i++) {
       Dino.updateBolt(this.bolts[i], dt);
       for (j = 0; j < this.obstacles.length; j++) {
@@ -350,7 +408,7 @@
       }
     }
     this.bolts = this.bolts.filter(function (b) {
-      return !b.remove && b.xPos < 4000;
+      return !b.remove && b.xPos < 4000 && b.xPos > -80;
     });
   };
 
@@ -393,6 +451,9 @@
 
     if (input.jumpPressed) {
       this.tRex.startJump(this.currentSpeed);
+      if (this.tRex.jumping && this.kit.cloak > 0) {
+        this.immuneMs = Math.max(this.immuneMs, 300 * this.kit.cloak);
+      }
     }
     if (input.duck && this.tRex.jumping) {
       this.tRex.setSpeedDrop();
@@ -433,7 +494,8 @@
     if (this.status === "CHOOSING") {
       return;
     }
-    this.updateBlaster(dt);
+    this.updateBlaster(dt, input.firePressed);
+    this.syncAttackButton();
 
     this.obstacles = this.obstacles.filter(function (o) {
       return !o.remove;
@@ -473,7 +535,7 @@
     }
 
     var prevActual = Dino.getActualDistance(this.distanceRan);
-    var maxSpeed = Dino.Config.maxSpeed + this.kit.skate * 1.4;
+    var maxSpeed = Dino.Config.maxSpeed + this.kit.skate * 1.4 + (this.kit.boots || 0) * 1.2;
     this.distanceRan +=
       this.currentSpeed *
       Dino.scoreMultiplier(this.kit) *
@@ -492,6 +554,7 @@
     }
     this.hud.update(dt, this.distanceRan);
     this.updateNight(dt);
+    this.syncAttackButton();
   };
 
   Game.prototype.colors = function () {
@@ -572,7 +635,7 @@
     return new Game(opts);
   };
 
-  Dino.boot = function (canvas, unsupportedEl) {
+  Dino.boot = function (canvas, unsupportedEl, attackBtn) {
     if (
       !canvas ||
       !canvas.getContext ||
@@ -590,11 +653,12 @@
     }
 
     var input = Dino.createInput();
-    input.attach(canvas);
+    input.attach(canvas, attackBtn);
     var game = new Game({
       innerWidth: window.innerWidth,
       innerHeight: window.innerHeight
     });
+    game.attackBtn = attackBtn || null;
     var last = performance.now();
 
     function fit() {
@@ -632,7 +696,8 @@
     document.addEventListener("DOMContentLoaded", function () {
       Dino.boot(
         document.getElementById("game"),
-        document.getElementById("unsupported")
+        document.getElementById("unsupported"),
+        document.getElementById("attack")
       );
     });
   }

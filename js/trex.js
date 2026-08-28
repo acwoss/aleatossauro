@@ -40,6 +40,8 @@
     this.minJumpHeight = groundY - c.minJumpHeight;
     this.xPos = c.startXPos;
     this.yPos = groundY;
+    this.facing = 1;
+    this.slashMs = 0;
     this.jumping = false;
     this.ducking = false;
     this.speedDrop = false;
@@ -210,6 +212,11 @@
       alpha *= 0.35;
     }
     ctx.globalAlpha = alpha;
+    if ((this.facing || 1) < 0) {
+      ctx.translate(this.xPos + 22, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-(this.xPos + 22), 0);
+    }
     if (scale !== 1) {
       var feetY = typeof Dino.drawFeetY === "function" ? Dino.drawFeetY(this) : this.yPos + cfg().trexHeight;
       ctx.translate(this.xPos, feetY);
@@ -241,6 +248,13 @@
     }
     if (gear.gun) {
       Dino.drawRects(ctx, Dino.Sprites.gun, gear.gun.x, gear.gun.y, palette.gun);
+    }
+    if (gear.sword && Dino.Sprites.sword) {
+      var sx = gear.sword.x + ((this.slashMs || 0) > 0 ? 8 : 0);
+      Dino.drawRects(ctx, Dino.Sprites.sword, sx, gear.sword.y, palette.sword || palette.gun);
+    }
+    if (gear.spear && Dino.Sprites.spear) {
+      Dino.drawRects(ctx, Dino.Sprites.spear, gear.spear.x, gear.spear.y, palette.spear || palette.cactus);
     }
     if (gear.shield) {
       ctx.globalAlpha = 0.5 * alpha;

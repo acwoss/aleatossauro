@@ -208,3 +208,30 @@ test("no boss o dino anda com a seta e vencer devolve a corrida", function () {
   assert.equal(g.tRex.xPos, Dino.Config.startXPos);
   assert.ok(g.immuneMs > 0);
 });
+
+test("blaster só atira com firePressed", function () {
+  var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
+  g.status = "RUNNING";
+  g.runningTime = 4000;
+  Dino.applyEffect(g.kit, "blaster");
+  var ammo = g.kit.blaster;
+  g.update(800, 1000, { jumpPressed: false, duck: false });
+  assert.equal(g.kit.blaster, ammo);
+  assert.equal(g.bolts.length, 0);
+  g.update(16, 1020, { jumpPressed: false, duck: false, firePressed: true });
+  assert.equal(g.kit.blaster, ammo - 1);
+  assert.ok(g.bolts.length >= 1);
+});
+
+test("ataque no boss causa 1 mais gravidades", function () {
+  var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
+  g.startBoss();
+  Dino.applyEffect(g.kit, "sword");
+  Dino.applyEffect(g.kit, "gravity");
+  Dino.applyEffect(g.kit, "gravity");
+  g.tRex.xPos = g.fight.boss.xPos - 40;
+  g.tRex.facing = 1;
+  var hp = g.fight.boss.hp;
+  g.tryAttack();
+  assert.equal(g.fight.boss.hp, hp - 3);
+});

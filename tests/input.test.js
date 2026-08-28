@@ -87,3 +87,13 @@ test("seta esquerda fica pressionada até o keyup", function () {
   el.fire("keyup", { code: "ArrowLeft", preventDefault: function () {} });
   assert.equal(input.consume().left, false);
 });
+
+test("Ctrl dispara ataque, não pulo", function () {
+  var el = fakeEl();
+  var input = Dino.createInput();
+  input.attach(el);
+  el.fire("keydown", { code: "ControlLeft", repeat: false, preventDefault: function () {} });
+  var a = input.consume();
+  assert.equal(a.firePressed, true);
+  assert.equal(a.jumpPressed, false);
+});

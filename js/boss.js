@@ -95,6 +95,10 @@
     };
   };
 
+  Dino.bossAttackDamage = function (kit) {
+    return 1 + ((kit && kit.gravity) || 0);
+  };
+
   Dino.hurtBoss = function (boss, amount) {
     if (!boss || boss.hp <= 0) return;
     boss.hp = Math.max(0, boss.hp - (amount || 1));
@@ -131,6 +135,8 @@
     var dx = 0;
     if (input.left) dx -= 1;
     if (input.right) dx += 1;
+    if (dx < 0) tRex.facing = -1;
+    if (dx > 0) tRex.facing = 1;
     tRex.xPos += dx * sp;
     var maxX = Math.max(8, logicalWidth - (tRex.config.width || 44) - 8);
     tRex.xPos = Dino.clamp(tRex.xPos, 8, maxX);

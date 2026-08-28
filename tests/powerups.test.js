@@ -4,13 +4,15 @@ require("../js/config.js");
 require("../js/collision.js");
 var Dino = require("../js/powerups.js");
 
-test("há pelo menos 12 efeitos sorteáveis", function () {
-  assert.ok(Dino.EFFECTS.length >= 12);
+test("há pelo menos 25 efeitos sorteáveis", function () {
+  assert.ok(Dino.EFFECTS.length >= 25);
   var ids = Dino.EFFECTS.map(function (e) { return e.id; });
   [
     "doubleJump", "skate", "hat", "blaster", "shield",
     "magnet", "mini", "titan", "wings", "coffee",
-    "spring", "clock", "ghost", "balloon", "gravity"
+    "spring", "clock", "ghost", "balloon", "gravity",
+    "sword", "spear", "heart", "boots", "ice",
+    "chili", "crystal", "cloak", "quake", "horn", "star"
   ].forEach(function (id) {
     assert.ok(ids.indexOf(id) !== -1, "falta efeito " + id);
   });
@@ -259,4 +261,35 @@ test("itens descem com o corpo quando o dino agacha", function () {
   assert.ok(duck.hats[0].y > stand.hats[0].y);
   assert.ok(duck.gun.y > stand.gun.y);
   assert.ok(duck.shield.y > stand.shield.y);
+});
+
+test("espada e lança geram hitbox à frente do dino", function () {
+  var kit = Dino.createPowerKit();
+  Dino.applyEffect(kit, "sword");
+  Dino.applyEffect(kit, "spear");
+  assert.equal(kit.sword, 1);
+  assert.equal(kit.spear, 1);
+  var tRex = { xPos: 50, yPos: 93, facing: 1, config: { width: 44, height: 47 } };
+  var boxes = Dino.attackHitboxes(kit, tRex);
+  assert.ok(boxes.length >= 2);
+  assert.ok(boxes[0].x >= tRex.xPos + 40);
+  tRex.facing = -1;
+  var left = Dino.attackHitboxes(kit, tRex);
+  assert.ok(left[0].x < tRex.xPos);
+});
+
+test("coração absorve um hit depois do fantasma", function () {
+  var kit = Dino.createPowerKit();
+  Dino.applyEffect(kit, "heart");
+  var large = { typeConfig: { type: "cactusLarge" } };
+  assert.equal(Dino.resolveObstacleHit(kit, large), "heart");
+  assert.equal(kit.hearts, 0);
+  assert.equal(Dino.resolveObstacleHit(kit, large), "crash");
+});
+
+test("canAttack só com arma ou blaster", function () {
+  var kit = Dino.createPowerKit();
+  assert.equal(Dino.canAttack(kit), false);
+  Dino.applyEffect(kit, "sword");
+  assert.equal(Dino.canAttack(kit), true);
 });

@@ -17,6 +17,8 @@
     var leftKey = false;
     var rightKey = false;
     var touchHold = null;
+    var fireQueued = false;
+    var attackEl = null;
 
     function prevent(ev) {
       if (ev && ev.preventDefault) ev.preventDefault();
@@ -46,6 +48,11 @@
       if (ev.code === "ArrowRight" || ev.code === "KeyD") {
         rightKey = true;
         choiceNudge = 1;
+        prevent(ev);
+        return;
+      }
+      if (ev.code === "ControlLeft" || ev.code === "ControlRight") {
+        fireQueued = true;
         prevent(ev);
         return;
       }
@@ -128,10 +135,16 @@
       touchHold = null;
     }
 
+    function onAttack(ev) {
+      prevent(ev);
+      fireQueued = true;
+    }
+
     return {
-      attach: function (target) {
+      attach: function (target, attackButton) {
         if (attached) this.detach();
         el = target;
+        attackEl = attackButton || null;
         keyTarget = typeof window !== "undefined" ? window : target;
         keyTarget.addEventListener("keydown", onKeyDown);
         keyTarget.addEventListener("keyup", onKeyUp);
@@ -139,6 +152,10 @@
         el.addEventListener("touchmove", onTouchMove, { passive: false });
         el.addEventListener("touchend", onTouchEnd, { passive: false });
         el.addEventListener("mouseup", onMouseUp);
+        if (attackEl) {
+          attackEl.addEventListener("click", onAttack);
+          attackEl.addEventListener("touchstart", onAttack, { passive: false });
+        }
         attached = true;
       },
       detach: function () {
@@ -149,6 +166,10 @@
         el.removeEventListener("touchmove", onTouchMove);
         el.removeEventListener("touchend", onTouchEnd);
         el.removeEventListener("mouseup", onMouseUp);
+        if (attackEl) {
+          attackEl.removeEventListener("click", onAttack);
+          attackEl.removeEventListener("touchstart", onAttack);
+        }
         attached = false;
       },
       consume: function () {
@@ -156,10 +177,12 @@
         var key = chooseKey;
         var nudge = choiceNudge;
         var ptr = pointer;
+        var fire = fireQueued;
         jumpQueued = false;
         chooseKey = null;
         choiceNudge = 0;
         pointer = null;
+        fireQueued = false;
         return {
           jumpPressed: jump,
           duck: duckKey || duckTouch,
@@ -168,6 +191,7 @@
           pointer: ptr,
           left: leftKey,
           right: rightKey,
+          firePressed: fire,
           touchClientX: touchHold ? touchHold.clientX : null,
           touchClientY: touchHold ? touchHold.clientY : null
         };

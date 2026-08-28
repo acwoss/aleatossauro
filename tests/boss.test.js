@@ -47,6 +47,13 @@ test("pulo na cabeça do boss causa dano", function () {
   assert.equal(fight.boss.state, "hurt");
 });
 
+test("dano no boss é 1 mais o número de gravidades", function () {
+  assert.equal(Dino.bossAttackDamage({}), 1);
+  assert.equal(Dino.bossAttackDamage({ gravity: 0 }), 1);
+  assert.equal(Dino.bossAttackDamage({ gravity: 1 }), 2);
+  assert.equal(Dino.bossAttackDamage({ gravity: 4 }), 5);
+});
+
 test("contato de lado com o boss não é stomp", function () {
   var fight = Dino.createBossFight(600, 5000, function () { return 0; });
   var tRex = {
@@ -69,4 +76,5 @@ test("mover o dino na arena respeita as bordas", function () {
   tRex.xPos = 8;
   Dino.moveBossPlayer(tRex, { left: true, right: false }, 16.67, 600);
   assert.equal(tRex.xPos, 8);
+  assert.equal(tRex.facing, -1);
 });
