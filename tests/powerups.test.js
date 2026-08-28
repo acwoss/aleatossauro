@@ -5,7 +5,7 @@ require("../js/collision.js");
 var Dino = require("../js/powerups.js");
 
 test("há pelo menos 25 efeitos sorteáveis", function () {
-  assert.ok(Dino.EFFECTS.length >= 25);
+  assert.ok(Dino.EFFECTS.length >= 75);
   var ids = Dino.EFFECTS.map(function (e) { return e.id; });
   [
     "doubleJump", "skate", "hat", "blaster", "shield",
@@ -16,6 +16,7 @@ test("há pelo menos 25 efeitos sorteáveis", function () {
   ].forEach(function (id) {
     assert.ok(ids.indexOf(id) !== -1, "falta efeito " + id);
   });
+  assert.equal(ids.length, new Set(ids).size);
 });
 
 test("cruzar múltiplos de 200 dispara pickup", function () {
@@ -393,4 +394,30 @@ test("kitHudItems lista ícones com contagem e ignora esgotados", function () {
   assert.equal(items.length, 1);
   assert.equal(items[0].id, "sword");
   assert.equal(items[0].count, 1);
+});
+
+test("há 50 cosméticos visuais com slot e atributo", function () {
+  var cosmetics = Dino.EFFECTS.filter(function (e) { return e.slot; });
+  assert.ok(cosmetics.length >= 50);
+  cosmetics.forEach(function (e) {
+    assert.ok(e.slot, "falta slot " + e.id);
+    assert.ok(e.stats && Object.keys(e.stats).length, "falta stats " + e.id);
+  });
+});
+
+test("cosmético acumula pilha, atributo e aparece no corpo", function () {
+  var kit = Dino.createPowerKit();
+  Dino.applyEffect(kit, "cape");
+  Dino.applyEffect(kit, "cape");
+  Dino.applyEffect(kit, "shades");
+  assert.equal(Dino.effectCount(kit, "cape"), 2);
+  assert.equal(Dino.effectCount(kit, "shades"), 1);
+  assert.ok(Dino.rpgStats(kit).jump > 1);
+  var gear = Dino.sideGear(kit, 50, 93, false);
+  assert.ok(gear.cosmetics.some(function (c) { return c.id === "cape"; }));
+  assert.ok(gear.cosmetics.some(function (c) { return c.id === "shades"; }));
+  var duck = Dino.sideGear(kit, 50, 93, true);
+  var capeStand = gear.cosmetics.filter(function (c) { return c.id === "cape"; })[0];
+  var capeDuck = duck.cosmetics.filter(function (c) { return c.id === "cape"; })[0];
+  assert.ok(capeDuck.y > capeStand.y);
 });

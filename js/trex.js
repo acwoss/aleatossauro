@@ -224,6 +224,26 @@
       ctx.translate(-this.xPos, -feetY);
     }
     var i;
+    function drawCosmetics(behind) {
+      var ci;
+      var c;
+      var spr;
+      if (!gear.cosmetics) return;
+      for (ci = 0; ci < gear.cosmetics.length; ci++) {
+        c = gear.cosmetics[ci];
+        if (!!c.behind !== behind) continue;
+        spr = Dino.Sprites.fx && Dino.Sprites.fx[c.id];
+        if (!spr) continue;
+        Dino.drawRects(
+          ctx,
+          spr,
+          c.x,
+          c.y,
+          typeof Dino.effectInk === "function" ? Dino.effectInk(c.id, palette) : body
+        );
+      }
+    }
+    drawCosmetics(true);
     for (i = 0; i < gear.wings.length; i++) {
       ctx.save();
       ctx.translate(gear.wings[i].x, gear.wings[i].y);
@@ -250,6 +270,7 @@
         Dino.drawRects(ctx, Dino.Sprites.hat, gear.hats[i].x, gear.hats[i].y, palette.hat);
       }
     }
+    drawCosmetics(false);
     if (gear.gun) {
       Dino.drawRects(ctx, Dino.Sprites.gun, gear.gun.x, gear.gun.y, palette.gun);
     }

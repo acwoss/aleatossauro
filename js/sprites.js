@@ -310,6 +310,47 @@
     }
   };
 
+  (function addCosmeticFx() {
+    var ids = [
+      "scarf", "shades", "mohawk", "bowtie", "pack", "bandana", "hoop", "stache",
+      "cape", "bell", "blossom", "crown", "visor", "poncho", "spikes", "goggles",
+      "lei", "ribbon", "antenna", "jetpack", "cowboy", "beanie", "phones", "beads",
+      "belt", "socks", "sandals", "tailspike", "plume", "splatter", "patch", "wizard",
+      "halo", "ramhorns", "snorkel", "monocle", "medal", "radio", "lantern", "flag",
+      "vine", "shroom", "honey", "boltcap", "bubble", "leaf", "bone", "muffler",
+      "prop", "saddle"
+    ];
+    function cosmeticFx(i) {
+      var rects = [];
+      var ox = i % 3;
+      var oy = (i * 2) % 3;
+      rects.push(R(ox, oy, Math.min(7, 10 - ox), 2));
+      rects.push(R(1, 3, 8, 2));
+      rects.push(R(2 + (i % 2), 5, 5, 3));
+      rects.push(R(i % 5, 8, Math.min(4, 10 - (i % 5)), 2));
+      if (i % 2 === 0) rects.push(R(8, 2, 2, 6));
+      if (i % 3 === 0) rects.push(R(0, 4, 2, 5));
+      if (i % 4 === 0) rects.push(R(4, 0, 2, 10));
+      if (i % 5 === 0) rects.push(R(6, 1, 3, 3));
+      return rects.filter(function (r) {
+        return r.w > 0 && r.h > 0 && r.x >= 0 && r.y >= 0 && r.x + r.w <= 10 && r.y + r.h <= 10;
+      });
+    }
+    ids.forEach(function (id, i) {
+      Dino.Sprites.fx[id] = cosmeticFx(i);
+    });
+    Dino.Sprites.fx.scarf = [R(0, 4, 10, 2), R(0, 6, 3, 4), R(7, 6, 3, 4)];
+    Dino.Sprites.fx.shades = [R(0, 3, 4, 3), R(6, 3, 4, 3), R(3, 4, 4, 1)];
+    Dino.Sprites.fx.mohawk = [R(4, 0, 2, 8), R(3, 1, 4, 2), R(2, 3, 6, 2)];
+    Dino.Sprites.fx.cape = [R(1, 0, 3, 10), R(3, 1, 4, 3), R(3, 6, 5, 4)];
+    Dino.Sprites.fx.crown = [R(1, 4, 8, 3), R(1, 1, 2, 4), R(4, 0, 2, 5), R(7, 1, 2, 4)];
+    Dino.Sprites.fx.jetpack = [R(2, 1, 6, 7), R(1, 7, 3, 3), R(6, 7, 3, 3)];
+    Dino.Sprites.fx.halo = [R(2, 1, 6, 2), R(1, 2, 2, 4), R(7, 2, 2, 4), R(2, 6, 6, 2)];
+    Dino.Sprites.fx.prop = [R(0, 4, 10, 2), R(4, 0, 2, 10), R(3, 3, 4, 4)];
+    Dino.Sprites.fx.saddle = [R(1, 3, 8, 4), R(2, 2, 6, 2), R(0, 6, 3, 3), R(7, 6, 3, 3)];
+    Dino.Sprites.fx.bone = [R(0, 3, 3, 4), R(2, 4, 6, 2), R(7, 3, 3, 4)];
+  })();
+
   Dino.Sprites.digits = [
     Dino.Sprites.digit0,
     Dino.Sprites.digit1,
