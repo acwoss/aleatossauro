@@ -113,12 +113,12 @@ test("restart zera o kit de power-ups", function () {
   assert.equal(g.immuneMs, 0);
 });
 
-test("cruzar 200 pontos spawna um crate", function () {
+test("cruzar 400 pontos spawna um crate", function () {
   var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
   g.status = "RUNNING";
   g.runningTime = 4000;
   g.currentSpeed = 13;
-  g.distanceRan = 7960;
+  g.distanceRan = 15960;
   g.update(50, 1000, { jumpPressed: false, duck: false });
   assert.ok(g.pickups.length >= 1);
 });

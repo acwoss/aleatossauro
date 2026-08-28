@@ -7,6 +7,34 @@ require("../js/skin.js");
 require("../js/powerups.js");
 var Dino = require("../js/trex.js");
 
+function jumpPeakHeight(kit) {
+  var groundY = 150 - 47 - 10;
+  var t = new Dino.Trex(groundY);
+  var peak;
+  var i;
+  Dino.syncTrexFromKit(t, kit);
+  t.startJump(0);
+  peak = t.yPos;
+  for (i = 0; i < 120; i++) {
+    t.updateJump(16.67);
+    if (t.yPos < peak) peak = t.yPos;
+    if (!t.jumping) break;
+  }
+  return groundY - peak;
+}
+
+test("altura do pulo é proporcional ao atributo de pulo", function () {
+  var empty = Dino.createPowerKit();
+  var hat = Dino.createPowerKit();
+  var h0;
+  var hHat;
+  Dino.applyEffect(hat, "hat");
+  h0 = jumpPeakHeight(empty);
+  hHat = jumpPeakHeight(hat);
+  assert.ok(hHat > h0);
+  assert.ok(Math.abs(hHat / h0 - Dino.rpgStats(hat).jump) < 0.4);
+});
+
 test("pulo sobe e volta ao chão", function () {
   var groundY = 150 - 47 - 10;
   var t = new Dino.Trex(groundY);

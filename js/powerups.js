@@ -126,7 +126,7 @@
     var base = (Dino.Config && Dino.Config.pickupScoreInterval) || 200;
     var growth = (Dino.Config && Dino.Config.pickupScoreGrowth) || 1.5;
     var scale = (Dino.Config && Dino.Config.pickupScoreScale) || 2000;
-    var min = (Dino.Config && Dino.Config.pickupScoreMin) || 40;
+    var min = (Dino.Config && Dino.Config.pickupScoreMin) || 400;
     var intel = 1;
     var t;
     if (typeof Dino.rpgStats === "function") {
@@ -420,6 +420,15 @@
 
   Dino.kitSpd = function (kit) {
     return Dino.sumEffectStat(kit, "spd");
+  };
+
+  Dino.kitJump = function (kit) {
+    return Math.max(1, 1 + Dino.sumEffectStat(kit, "jump"));
+  };
+
+  Dino.jumpImpulse = function (kit) {
+    var base = (Dino.Config && Dino.Config.initialJumpVelocity) || -10;
+    return base * Math.sqrt(Dino.kitJump(kit));
   };
 
   Dino.runSpeedBonus = function (kit) {
@@ -724,22 +733,13 @@
   Dino.syncTrexFromKit = function (tRex, kit) {
     var c = Dino.Config;
     var gravity = c.gravity;
-    var jump = c.initialJumpVelocity;
-    var maxH = c.maxJumpHeight;
-    var minH = c.minJumpHeight;
+    var jumpStat = typeof Dino.kitJump === "function" ? Dino.kitJump(kit) : 1;
+    var jump = typeof Dino.jumpImpulse === "function" ? Dino.jumpImpulse(kit) : c.initialJumpVelocity;
+    var rise = tRex.groundYPos - c.maxJumpHeight;
+    var maxH = tRex.groundYPos - rise * jumpStat;
+    var minH = c.minJumpHeight * jumpStat;
     if (kit.wings) gravity *= Math.pow(0.62, kit.wings);
     if (kit.balloon) gravity *= Math.pow(0.75, kit.balloon);
-    if (kit.spring) {
-      jump -= 3 * kit.spring;
-      maxH = Math.max(8, maxH - 12 * kit.spring);
-      minH += 8 * kit.spring;
-    }
-    if (kit.hats) jump -= 0.8 * kit.hats;
-    if (kit.skate) jump -= 0.4 * kit.skate;
-    if (kit.chili) {
-      jump -= 2.4 * kit.chili;
-      minH += 6 * kit.chili;
-    }
     tRex.config.gravity = gravity;
     tRex.config.initialJumpVelocity = jump;
     tRex.config.maxJumpHeight = maxH;

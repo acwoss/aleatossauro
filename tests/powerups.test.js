@@ -20,32 +20,61 @@ test("há pelo menos 25 efeitos sorteáveis", function () {
   assert.equal(ids.length, new Set(ids).size);
 });
 
-test("cruzar o primeiro ovo em 200 pontos", function () {
-  assert.equal(Dino.crossedPickupThreshold(199, 200), true);
-  assert.equal(Dino.crossedPickupThreshold(200, 201), false);
+test("cruzar o primeiro ovo em 400 pontos", function () {
+  assert.equal(Dino.crossedPickupThreshold(399, 400), true);
+  assert.equal(Dino.crossedPickupThreshold(400, 401), false);
   assert.equal(Dino.crossedPickupThreshold(0, 0), false);
+});
+
+test("intervalo minimo entre ovos é 400", function () {
+  var kit = Dino.createPowerKit();
+  assert.equal(Dino.Config.pickupScoreMin, 400);
+  assert.ok(Dino.pickupInterval(0, kit) >= 400);
+  Dino.applyEffect(kit, "coffee");
+  assert.ok(Dino.pickupInterval(0, kit) >= 400);
+  assert.ok(Dino.pickupInterval(2000, kit) >= 400);
 });
 
 test("intervalo do ovo cresce com o score e cai com inteligência", function () {
   var kit = Dino.createPowerKit();
   var low = Dino.createPowerKit();
   var scale = Dino.Config.pickupScoreScale || 2000;
+  var late = scale * 2;
   var a = Dino.pickupInterval(0, kit);
   var b = Dino.pickupInterval(scale, kit);
-  var c = Dino.pickupInterval(scale * 2, kit);
-  assert.equal(a, 200);
-  assert.ok(b > a);
+  var c = Dino.pickupInterval(late, kit);
+  assert.equal(a, 400);
   assert.ok(c > b);
-  assert.ok(Math.abs(c / b - b / a) < 0.05);
-  assert.equal(Dino.nextPickupScore(0, kit), 200);
-  assert.equal(Dino.crossedPickupThreshold(199, 200, kit, 0), true);
+  assert.ok(c > a);
+  assert.equal(Dino.nextPickupScore(0, kit), 400);
+  assert.equal(Dino.crossedPickupThreshold(399, 400, kit, 0), true);
   Dino.applyEffect(kit, "coffee");
   var intel = Dino.rpgStats(kit).int;
   assert.equal(intel, 4);
-  assert.equal(Dino.pickupInterval(0, kit), Math.max(40, Math.round(200 / intel)));
-  assert.ok(Dino.pickupInterval(scale, kit) < Dino.pickupInterval(scale, low));
-  assert.ok(Dino.pickupInterval(scale, kit) <= Math.round(Dino.pickupInterval(scale, low) / intel) + 1);
-  assert.ok(Dino.pickupInterval(scale, kit) < 120, "INT 4 no meio da corrida não pode explodir o intervalo");
+  assert.equal(Dino.pickupInterval(0, kit), 400);
+  assert.ok(Dino.pickupInterval(late, kit) < Dino.pickupInterval(late, low));
+  assert.ok(Dino.pickupInterval(late, kit) >= 400);
+});
+
+test("itens com PULO aumentam o impulso na mesma proporção do atributo", function () {
+  var empty = { config: {}, groundYPos: 93 };
+  var ribbon = { config: {}, groundYPos: 93 };
+  var cape = { config: {}, groundYPos: 93 };
+  var kitR = Dino.createPowerKit();
+  var kitC = Dino.createPowerKit();
+  var v0;
+  Dino.syncTrexFromKit(empty, Dino.createPowerKit());
+  Dino.applyEffect(kitR, "ribbon");
+  Dino.syncTrexFromKit(ribbon, kitR);
+  Dino.applyEffect(kitC, "cape");
+  Dino.syncTrexFromKit(cape, kitC);
+  v0 = empty.config.initialJumpVelocity;
+  assert.equal(Dino.rpgStats(kitR).jump, 2);
+  assert.equal(Dino.rpgStats(kitC).jump, 3);
+  assert.ok(ribbon.config.initialJumpVelocity < v0);
+  assert.ok(cape.config.initialJumpVelocity < ribbon.config.initialJumpVelocity);
+  assert.ok(Math.abs(ribbon.config.initialJumpVelocity / v0 - Math.sqrt(2)) < 0.02);
+  assert.ok(Math.abs(cape.config.initialJumpVelocity / v0 - Math.sqrt(3)) < 0.02);
 });
 
 test("efeito oculto é aleatório e só com 1% de sorte", function () {
