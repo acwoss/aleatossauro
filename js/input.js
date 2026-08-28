@@ -1,0 +1,158 @@
+(function (root) {
+  var Dino = root.Dino || (root.Dino = {});
+
+  Dino.createInput = function () {
+    var jumpQueued = false;
+    var duckKey = false;
+    var duckTouch = false;
+    var touchId = null;
+    var startX = 0;
+    var startY = 0;
+    var el = null;
+    var keyTarget = null;
+    var attached = false;
+    var chooseKey = null;
+    var choiceNudge = 0;
+    var pointer = null;
+
+    function prevent(ev) {
+      if (ev && ev.preventDefault) ev.preventDefault();
+    }
+
+    function onKeyDown(ev) {
+      if (ev.repeat) {
+        prevent(ev);
+        return;
+      }
+      if (ev.code === "Digit1" || ev.code === "Numpad1") {
+        chooseKey = 0;
+        prevent(ev);
+        return;
+      }
+      if (ev.code === "Digit2" || ev.code === "Numpad2") {
+        chooseKey = 1;
+        prevent(ev);
+        return;
+      }
+      if (ev.code === "ArrowLeft") {
+        choiceNudge = -1;
+        prevent(ev);
+        return;
+      }
+      if (ev.code === "ArrowRight") {
+        choiceNudge = 1;
+        prevent(ev);
+        return;
+      }
+      if (ev.code === "Space" || ev.code === "ArrowUp" || ev.code === "Enter") {
+        jumpQueued = true;
+        prevent(ev);
+      } else if (ev.code === "ArrowDown") {
+        duckKey = true;
+        prevent(ev);
+      }
+    }
+
+    function onKeyUp(ev) {
+      if (ev.code === "ArrowDown") {
+        duckKey = false;
+        prevent(ev);
+      }
+    }
+
+    function firstTouch(list) {
+      if (!list || !list.length) return null;
+      var i;
+      for (i = 0; i < list.length; i++) {
+        if (touchId === null || list[i].identifier === touchId) return list[i];
+      }
+      return null;
+    }
+
+    function onTouchStart(ev) {
+      prevent(ev);
+      if (touchId !== null) return;
+      var t = ev.touches && ev.touches[0];
+      if (!t) return;
+      touchId = t.identifier;
+      startX = t.clientX;
+      startY = t.clientY;
+      duckTouch = false;
+    }
+
+    function onTouchMove(ev) {
+      prevent(ev);
+      var t = firstTouch(ev.touches);
+      if (!t || t.identifier !== touchId) return;
+      if (t.clientY - startY >= Dino.Config.swipeDownMin) {
+        duckTouch = true;
+      }
+    }
+
+    function onMouseUp(ev) {
+      prevent(ev);
+      pointer = { clientX: ev.clientX, clientY: ev.clientY };
+    }
+
+    function onTouchEnd(ev) {
+      prevent(ev);
+      var t = firstTouch(ev.changedTouches);
+      if (!t || t.identifier !== touchId) return;
+      var dx = t.clientX - startX;
+      var dy = t.clientY - startY;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      pointer = { clientX: t.clientX, clientY: t.clientY };
+      if (!duckTouch && dist < Dino.Config.tapMaxDist) {
+        jumpQueued = true;
+      }
+      touchId = null;
+      duckTouch = false;
+    }
+
+    return {
+      attach: function (target) {
+        if (attached) this.detach();
+        el = target;
+        keyTarget = typeof window !== "undefined" ? window : target;
+        keyTarget.addEventListener("keydown", onKeyDown);
+        keyTarget.addEventListener("keyup", onKeyUp);
+        el.addEventListener("touchstart", onTouchStart, { passive: false });
+        el.addEventListener("touchmove", onTouchMove, { passive: false });
+        el.addEventListener("touchend", onTouchEnd, { passive: false });
+        el.addEventListener("mouseup", onMouseUp);
+        attached = true;
+      },
+      detach: function () {
+        if (!attached) return;
+        keyTarget.removeEventListener("keydown", onKeyDown);
+        keyTarget.removeEventListener("keyup", onKeyUp);
+        el.removeEventListener("touchstart", onTouchStart);
+        el.removeEventListener("touchmove", onTouchMove);
+        el.removeEventListener("touchend", onTouchEnd);
+        el.removeEventListener("mouseup", onMouseUp);
+        attached = false;
+      },
+      consume: function () {
+        var jump = jumpQueued;
+        var key = chooseKey;
+        var nudge = choiceNudge;
+        var ptr = pointer;
+        jumpQueued = false;
+        chooseKey = null;
+        choiceNudge = 0;
+        pointer = null;
+        return {
+          jumpPressed: jump,
+          duck: duckKey || duckTouch,
+          chooseKey: key,
+          choiceNudge: nudge,
+          pointer: ptr
+        };
+      }
+    };
+  };
+
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = Dino;
+  }
+})(typeof globalThis !== "undefined" ? globalThis : this);
