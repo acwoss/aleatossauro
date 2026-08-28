@@ -20,11 +20,52 @@ test("há pelo menos 25 efeitos sorteáveis", function () {
   assert.equal(ids.length, new Set(ids).size);
 });
 
-test("cruzar múltiplos de 200 dispara pickup", function () {
+test("cruzar o primeiro ovo em 200 pontos", function () {
   assert.equal(Dino.crossedPickupThreshold(199, 200), true);
   assert.equal(Dino.crossedPickupThreshold(200, 201), false);
-  assert.equal(Dino.crossedPickupThreshold(399, 400), true);
   assert.equal(Dino.crossedPickupThreshold(0, 0), false);
+});
+
+test("intervalo do ovo cresce com o score e cai com inteligência", function () {
+  var kit = Dino.createPowerKit();
+  var low = Dino.createPowerKit();
+  var scale = Dino.Config.pickupScoreScale || 2000;
+  var a = Dino.pickupInterval(0, kit);
+  var b = Dino.pickupInterval(scale, kit);
+  var c = Dino.pickupInterval(scale * 2, kit);
+  assert.equal(a, 200);
+  assert.ok(b > a);
+  assert.ok(c > b);
+  assert.ok(Math.abs(c / b - b / a) < 0.05);
+  assert.equal(Dino.nextPickupScore(0, kit), 200);
+  assert.equal(Dino.crossedPickupThreshold(199, 200, kit, 0), true);
+  Dino.applyEffect(kit, "coffee");
+  var intel = Dino.rpgStats(kit).int;
+  assert.equal(intel, 4);
+  assert.equal(Dino.pickupInterval(0, kit), Math.max(40, Math.round(200 / intel)));
+  assert.ok(Dino.pickupInterval(scale, kit) < Dino.pickupInterval(scale, low));
+  assert.ok(Dino.pickupInterval(scale, kit) <= Math.round(Dino.pickupInterval(scale, low) / intel) + 1);
+  assert.ok(Dino.pickupInterval(scale, kit) < 120, "INT 4 no meio da corrida não pode explodir o intervalo");
+});
+
+test("toda evolução tem um efeito oculto distinto", function () {
+  Dino.EFFECTS.forEach(function (e) {
+    assert.ok(e.hidden, "falta oculto " + e.id);
+    assert.notEqual(e.hidden, e.id);
+    assert.ok(Dino.effectById(e.hidden), e.id + " oculto inválido " + e.hidden);
+  });
+});
+
+test("escolher evolução aplica o oculto; applyEffect não", function () {
+  var sword = Dino.effectById("sword");
+  var kit = Dino.createPowerKit();
+  Dino.applyEffect(kit, "sword");
+  assert.equal(Dino.effectCount(kit, "sword"), 1);
+  assert.equal(Dino.effectCount(kit, sword.hidden), 0);
+  var evolved = Dino.createPowerKit();
+  Dino.applyEvolution(evolved, "sword");
+  assert.equal(Dino.effectCount(evolved, "sword"), 1);
+  assert.ok(Dino.effectCount(evolved, sword.hidden) >= 1);
 });
 
 test("applyEffect acumula pulo extra, café e escudo", function () {
@@ -402,6 +443,58 @@ test("kitHudItems lista ícones com contagem e ignora esgotados", function () {
   assert.equal(items.length, 1);
   assert.equal(items[0].id, "sword");
   assert.equal(items[0].count, 1);
+});
+
+test("acessórios de olho usam o slot do olho", function () {
+  ["patch", "shades", "goggles", "monocle", "visor"].forEach(function (id) {
+    var e = Dino.EFFECTS.filter(function (x) { return x.id === id; })[0];
+    assert.ok(e, id);
+    assert.equal(e.slot, "eye", id);
+  });
+});
+
+test("tapa-olho e óculos cobrem o olho em pé e agachado", function () {
+  function bounds(rects) {
+    var minX = 99;
+    var minY = 99;
+    var maxX = 0;
+    var maxY = 0;
+    rects.forEach(function (r) {
+      if (r.x < minX) minX = r.x;
+      if (r.y < minY) minY = r.y;
+      if (r.x + r.w > maxX) maxX = r.x + r.w;
+      if (r.y + r.h > maxY) maxY = r.y + r.h;
+    });
+    return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+  }
+  function overlaps(c, pose) {
+    var eye = Dino.trexParts(pose).eye;
+    var b = bounds(Dino.Sprites.fx[c.id]);
+    var left = c.x + b.x;
+    var top = c.y + b.y;
+    return left < eye.x + eye.w && left + b.w > eye.x && top < eye.y + eye.h && top + b.h > eye.y;
+  }
+  ["patch", "shades", "goggles", "monocle", "visor"].forEach(function (id) {
+    var kit = Dino.createPowerKit();
+    Dino.applyEffect(kit, id);
+    var stand = Dino.sideGear(kit, 0, 0, false).cosmetics.filter(function (c) { return c.id === id; })[0];
+    var duck = Dino.sideGear(kit, 0, 0, true).cosmetics.filter(function (c) { return c.id === id; })[0];
+    assert.ok(stand, id);
+    assert.ok(overlaps(stand, "wait"), id + " em pé fora do olho");
+    assert.ok(overlaps(duck, "duck1"), id + " agachado fora do olho");
+  });
+});
+
+test("chapéu fica acima da cabeça e osso na boca", function () {
+  var kit = Dino.createPowerKit();
+  Dino.applyEffect(kit, "cowboy");
+  Dino.applyEffect(kit, "bone");
+  var gear = Dino.sideGear(kit, 0, 0, false);
+  var head = Dino.trexParts("wait").head;
+  var cowboy = gear.cosmetics.filter(function (c) { return c.id === "cowboy"; })[0];
+  var bone = gear.cosmetics.filter(function (c) { return c.id === "bone"; })[0];
+  assert.ok(cowboy.y + 5 <= head.y + head.h * 0.45, "chapéu baixo demais");
+  assert.ok(bone.x > head.x + head.w * 0.55, "osso longe do focinho");
 });
 
 test("há 50 cosméticos visuais com slot e atributo", function () {

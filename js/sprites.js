@@ -18,7 +18,7 @@
   var trexBody = [
     R(20, 0, 22, 16),
     R(38, 4, 6, 8),
-    R(22, 4, 3, 3),
+    R(34, 4, 3, 3),
     R(14, 16, 24, 16),
     R(2, 20, 14, 6),
     R(0, 22, 4, 4),
@@ -34,7 +34,7 @@
   var trexBlink = [
     R(20, 0, 22, 16),
     R(38, 4, 6, 8),
-    R(22, 6, 8, 2),
+    R(32, 6, 8, 2),
     R(14, 16, 24, 16),
     R(2, 20, 14, 6),
     R(0, 22, 4, 4),
@@ -76,9 +76,9 @@
   var trexCrash = [
     R(20, 0, 22, 16),
     R(38, 4, 6, 8),
-    R(26, 4, 6, 6),
-    R(24, 6, 2, 2),
+    R(32, 4, 6, 6),
     R(30, 6, 2, 2),
+    R(36, 6, 2, 2),
     R(14, 16, 24, 16),
     R(2, 20, 14, 6),
     R(0, 22, 4, 4),
@@ -91,7 +91,7 @@
   var trexDuck1 = [
     R(32, 18, 26, 14),
     R(52, 22, 7, 6),
-    R(34, 22, 3, 3),
+    R(48, 22, 3, 3),
     R(8, 24, 28, 14),
     R(0, 28, 10, 6),
     R(18, 36, 12, 6),
@@ -102,7 +102,7 @@
   var trexDuck2 = [
     R(32, 18, 26, 14),
     R(52, 22, 7, 6),
-    R(34, 22, 3, 3),
+    R(48, 22, 3, 3),
     R(8, 24, 28, 14),
     R(0, 28, 10, 6),
     R(22, 36, 12, 6),
@@ -311,44 +311,62 @@
   };
 
   (function addCosmeticFx() {
-    var ids = [
-      "scarf", "shades", "mohawk", "bowtie", "pack", "bandana", "hoop", "stache",
-      "cape", "bell", "blossom", "crown", "visor", "poncho", "spikes", "goggles",
-      "lei", "ribbon", "antenna", "jetpack", "cowboy", "beanie", "phones", "beads",
-      "belt", "socks", "sandals", "tailspike", "plume", "splatter", "patch", "wizard",
-      "halo", "ramhorns", "snorkel", "monocle", "medal", "radio", "lantern", "flag",
-      "vine", "shroom", "honey", "boltcap", "bubble", "leaf", "bone", "muffler",
-      "prop", "saddle"
-    ];
-    function cosmeticFx(i) {
-      var rects = [];
-      var ox = i % 3;
-      var oy = (i * 2) % 3;
-      rects.push(R(ox, oy, Math.min(7, 10 - ox), 2));
-      rects.push(R(1, 3, 8, 2));
-      rects.push(R(2 + (i % 2), 5, 5, 3));
-      rects.push(R(i % 5, 8, Math.min(4, 10 - (i % 5)), 2));
-      if (i % 2 === 0) rects.push(R(8, 2, 2, 6));
-      if (i % 3 === 0) rects.push(R(0, 4, 2, 5));
-      if (i % 4 === 0) rects.push(R(4, 0, 2, 10));
-      if (i % 5 === 0) rects.push(R(6, 1, 3, 3));
-      return rects.filter(function (r) {
-        return r.w > 0 && r.h > 0 && r.x >= 0 && r.y >= 0 && r.x + r.w <= 10 && r.y + r.h <= 10;
-      });
+    var icons = {
+      scarf: [R(0, 3, 10, 2), R(0, 5, 3, 5), R(7, 5, 3, 5)],
+      shades: [R(0, 3, 4, 3), R(6, 3, 4, 3), R(4, 4, 2, 1)],
+      mohawk: [R(4, 0, 2, 8), R(3, 1, 4, 2), R(2, 3, 6, 2), R(5, 0, 2, 4)],
+      bowtie: [R(0, 3, 4, 5), R(6, 3, 4, 5), R(3, 4, 4, 3)],
+      pack: [R(2, 1, 6, 8), R(3, 0, 4, 2), R(1, 3, 2, 5), R(7, 3, 2, 5)],
+      bandana: [R(1, 2, 8, 3), R(0, 4, 3, 3), R(7, 1, 3, 3)],
+      hoop: [R(3, 1, 4, 2), R(2, 3, 2, 4), R(6, 3, 2, 4), R(3, 7, 4, 2)],
+      stache: [R(1, 5, 3, 3), R(6, 5, 3, 3), R(3, 4, 4, 2)],
+      cape: [R(1, 0, 3, 10), R(3, 2, 4, 4), R(3, 6, 5, 4)],
+      bell: [R(3, 0, 4, 2), R(2, 2, 6, 5), R(1, 7, 8, 2), R(4, 9, 2, 1)],
+      blossom: [R(4, 0, 2, 2), R(1, 3, 2, 2), R(7, 3, 2, 2), R(2, 7, 2, 2), R(6, 7, 2, 2), R(3, 3, 4, 4)],
+      crown: [R(1, 4, 8, 3), R(1, 1, 2, 4), R(4, 0, 2, 5), R(7, 1, 2, 4)],
+      visor: [R(0, 3, 10, 3), R(1, 2, 8, 1)],
+      poncho: [R(1, 1, 8, 3), R(0, 4, 10, 6)],
+      spikes: [R(1, 5, 2, 5), R(4, 2, 2, 8), R(7, 5, 2, 5), R(0, 8, 10, 2)],
+      goggles: [R(0, 2, 4, 5), R(6, 2, 4, 5), R(4, 4, 2, 2)],
+      lei: [R(2, 1, 2, 2), R(6, 1, 2, 2), R(0, 4, 2, 2), R(8, 4, 2, 2), R(2, 7, 2, 2), R(6, 7, 2, 2), R(4, 4, 2, 2)],
+      ribbon: [R(0, 2, 4, 6), R(6, 2, 4, 6), R(3, 3, 4, 4), R(4, 7, 2, 3)],
+      antenna: [R(4, 2, 2, 8), R(3, 0, 4, 3)],
+      jetpack: [R(2, 1, 6, 6), R(1, 7, 3, 3), R(6, 7, 3, 3)],
+      cowboy: [R(0, 4, 10, 2), R(2, 1, 6, 5), R(3, 0, 4, 2)],
+      beanie: [R(2, 0, 6, 3), R(1, 3, 8, 5)],
+      phones: [R(0, 2, 3, 6), R(7, 2, 3, 6), R(1, 0, 8, 2)],
+      beads: [R(1, 2, 2, 2), R(4, 1, 2, 2), R(7, 2, 2, 2), R(2, 5, 2, 2), R(6, 5, 2, 2), R(4, 7, 2, 2)],
+      belt: [R(0, 4, 10, 3), R(4, 3, 3, 5)],
+      socks: [R(1, 1, 3, 8), R(6, 1, 3, 8), R(1, 5, 3, 1), R(6, 5, 3, 1)],
+      sandals: [R(0, 7, 4, 2), R(6, 7, 4, 2), R(1, 4, 2, 4), R(7, 4, 2, 4)],
+      tailspike: [R(0, 4, 8, 2), R(6, 2, 4, 6)],
+      plume: [R(4, 0, 2, 9), R(2, 1, 3, 4), R(6, 2, 3, 5)],
+      splatter: [R(1, 1, 3, 3), R(5, 2, 4, 3), R(2, 6, 3, 3), R(7, 7, 2, 2)],
+      patch: [R(0, 2, 10, 2), R(2, 1, 5, 5)],
+      wizard: [R(4, 0, 3, 6), R(2, 5, 6, 3), R(1, 8, 8, 2), R(6, 1, 3, 4)],
+      halo: [R(2, 1, 6, 2), R(1, 2, 2, 4), R(7, 2, 2, 4), R(2, 6, 6, 2)],
+      ramhorns: [R(0, 2, 3, 2), R(0, 2, 2, 6), R(7, 2, 3, 2), R(8, 2, 2, 6)],
+      snorkel: [R(1, 3, 6, 4), R(7, 0, 2, 8), R(6, 0, 3, 2)],
+      monocle: [R(2, 2, 6, 2), R(2, 6, 6, 2), R(2, 2, 2, 6), R(6, 2, 2, 6), R(7, 8, 2, 2)],
+      medal: [R(3, 0, 4, 3), R(2, 4, 6, 6), R(4, 6, 2, 2)],
+      radio: [R(1, 3, 8, 6), R(2, 1, 2, 3), R(6, 0, 2, 4)],
+      lantern: [R(3, 0, 4, 2), R(2, 2, 6, 6), R(4, 8, 2, 2), R(1, 3, 2, 4), R(7, 3, 2, 4)],
+      flag: [R(1, 0, 2, 10), R(3, 1, 6, 4)],
+      vine: [R(4, 0, 2, 3), R(2, 3, 4, 2), R(1, 5, 2, 3), R(3, 7, 4, 2)],
+      shroom: [R(1, 1, 8, 4), R(3, 0, 4, 2), R(3, 5, 4, 5)],
+      honey: [R(2, 1, 6, 6), R(3, 0, 4, 2), R(4, 7, 2, 3)],
+      boltcap: [R(5, 0, 3, 3), R(3, 3, 4, 3), R(1, 6, 4, 4)],
+      bubble: [R(2, 1, 6, 2), R(1, 3, 2, 4), R(7, 3, 2, 4), R(2, 7, 6, 2)],
+      leaf: [R(4, 0, 2, 9), R(2, 2, 6, 4), R(1, 4, 3, 3)],
+      bone: [R(0, 3, 3, 4), R(2, 4, 6, 2), R(7, 3, 3, 4)],
+      muffler: [R(0, 2, 10, 3), R(0, 5, 4, 5), R(6, 5, 4, 5)],
+      prop: [R(0, 4, 10, 2), R(4, 0, 2, 10), R(3, 3, 4, 4)],
+      saddle: [R(1, 3, 8, 4), R(2, 2, 6, 2), R(0, 6, 3, 3), R(7, 6, 3, 3)]
+    };
+    var id;
+    for (id in icons) {
+      if (icons.hasOwnProperty(id)) Dino.Sprites.fx[id] = icons[id];
     }
-    ids.forEach(function (id, i) {
-      Dino.Sprites.fx[id] = cosmeticFx(i);
-    });
-    Dino.Sprites.fx.scarf = [R(0, 4, 10, 2), R(0, 6, 3, 4), R(7, 6, 3, 4)];
-    Dino.Sprites.fx.shades = [R(0, 3, 4, 3), R(6, 3, 4, 3), R(3, 4, 4, 1)];
-    Dino.Sprites.fx.mohawk = [R(4, 0, 2, 8), R(3, 1, 4, 2), R(2, 3, 6, 2)];
-    Dino.Sprites.fx.cape = [R(1, 0, 3, 10), R(3, 1, 4, 3), R(3, 6, 5, 4)];
-    Dino.Sprites.fx.crown = [R(1, 4, 8, 3), R(1, 1, 2, 4), R(4, 0, 2, 5), R(7, 1, 2, 4)];
-    Dino.Sprites.fx.jetpack = [R(2, 1, 6, 7), R(1, 7, 3, 3), R(6, 7, 3, 3)];
-    Dino.Sprites.fx.halo = [R(2, 1, 6, 2), R(1, 2, 2, 4), R(7, 2, 2, 4), R(2, 6, 6, 2)];
-    Dino.Sprites.fx.prop = [R(0, 4, 10, 2), R(4, 0, 2, 10), R(3, 3, 4, 4)];
-    Dino.Sprites.fx.saddle = [R(1, 3, 8, 4), R(2, 2, 6, 2), R(0, 6, 3, 3), R(7, 6, 3, 3)];
-    Dino.Sprites.fx.bone = [R(0, 3, 3, 4), R(2, 4, 6, 2), R(7, 3, 3, 4)];
   })();
 
   Dino.Sprites.digits = [
@@ -369,7 +387,7 @@
   }
 
   var waitParts = {
-    eye: partBox(22, 4, 3, 3),
+    eye: partBox(34, 4, 3, 3),
     head: partBox(20, 0, 24, 16),
     torso: partBox(0, 16, 38, 16),
     arm: partBox(18, 22, 10, 3),
@@ -397,7 +415,7 @@
   };
   Dino.TREX_PARTS = {
     wait: waitParts,
-    blink: overlayParts({ eye: partBox(22, 6, 8, 2) }),
+    blink: overlayParts({ eye: partBox(32, 6, 8, 2) }),
     run1: overlayParts({
       legs: partBox(12, 32, 22, 12),
       feet: partBox(12, 44, 10, 3)
@@ -414,9 +432,9 @@
       legs: partBox(16, 32, 14, 10),
       feet: partBox(16, 42, 14, 3)
     }),
-    crash: overlayParts({ eye: partBox(24, 4, 8, 6) }),
+    crash: overlayParts({ eye: partBox(30, 4, 10, 6) }),
     duck1: {
-      eye: partBox(34, 22, 3, 3),
+      eye: partBox(48, 22, 3, 3),
       head: partBox(32, 18, 27, 14),
       torso: partBox(0, 24, 36, 14),
       arm: partBox(14, 28, 12, 4),
@@ -424,13 +442,41 @@
       feet: partBox(16, 42, 8, 5)
     },
     duck2: {
-      eye: partBox(34, 22, 3, 3),
+      eye: partBox(48, 22, 3, 3),
       head: partBox(32, 18, 27, 14),
       torso: partBox(0, 24, 36, 14),
       arm: partBox(14, 28, 12, 4),
       legs: partBox(12, 36, 22, 6),
       feet: partBox(24, 42, 8, 5)
     }
+  };
+
+  Dino.spriteBounds = function (rects) {
+    var minX = 0;
+    var minY = 0;
+    var maxX = 0;
+    var maxY = 0;
+    var i;
+    var r;
+    var started = false;
+    rects = rects || [];
+    for (i = 0; i < rects.length; i++) {
+      r = rects[i];
+      if (!started) {
+        minX = r.x;
+        minY = r.y;
+        maxX = r.x + r.w;
+        maxY = r.y + r.h;
+        started = true;
+        continue;
+      }
+      if (r.x < minX) minX = r.x;
+      if (r.y < minY) minY = r.y;
+      if (r.x + r.w > maxX) maxX = r.x + r.w;
+      if (r.y + r.h > maxY) maxY = r.y + r.h;
+    }
+    if (!started) return { x: 0, y: 0, w: 10, h: 10 };
+    return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
   };
 
   Dino.trexParts = function (pose) {

@@ -33,41 +33,41 @@
 
   Dino.COSMETICS = [
     { id: "scarf", label: "CACHECOL", desc: "Esquenta o pescoço na corrida fria.", stats: { hp: 1 }, slot: "neck" },
-    { id: "shades", label: "ÓCULOS ESCUROS", desc: "Cara de quem já viu o deserto inteiro.", stats: { int: 1 }, slot: "snout" },
+    { id: "shades", label: "ÓCULOS ESCUROS", desc: "Cara de quem já viu o deserto inteiro.", stats: { int: 1 }, slot: "eye" },
     { id: "mohawk", label: "MOICANO", desc: "Crista punk que corta o vento.", stats: { spd: 1 }, slot: "head" },
-    { id: "bowtie", label: "GRAVATA BORBOLETA", desc: "Elegância inesperada no rex.", stats: { int: 1 }, slot: "chest" },
+    { id: "bowtie", label: "GRAVATA BORBOLETA", desc: "Elegância inesperada no rex.", stats: { int: 1 }, slot: "neck" },
     { id: "pack", label: "MOCHILA", desc: "Leva lanches e um pouco de coragem.", stats: { hp: 1, jump: 1 }, slot: "back" },
     { id: "bandana", label: "BANDANA", desc: "Prende o sol e o estilo.", stats: { spd: 1 }, slot: "head" },
-    { id: "hoop", label: "ARGOLA", desc: "Um brinco que brilha a cada pulo.", stats: { int: 1 }, slot: "head" },
+    { id: "hoop", label: "ARGOLA", desc: "Um brinco que brilha a cada pulo.", stats: { int: 1 }, slot: "head", fit: { ux: 0.9, uy: 0.28 } },
     { id: "stache", label: "BIGODE", desc: "Respeito instantâneo na areia.", stats: { str: 1 }, slot: "snout" },
     { id: "cape", label: "CAPA", desc: "Voa para trás e anima o salto.", stats: { jump: 2 }, slot: "back" },
     { id: "bell", label: "SININHO", desc: "Tlim-tlim na cauda, ovos prestam atenção.", stats: { int: 1 }, slot: "tail" },
-    { id: "blossom", label: "FLOR", desc: "Uma flor viva atrás da orelha.", stats: { hp: 1 }, slot: "head" },
+    { id: "blossom", label: "FLOR", desc: "Uma flor viva atrás da orelha.", stats: { hp: 1 }, slot: "head", fit: { ux: 0.12, uy: 0.12 } },
     { id: "crown", label: "COROA", desc: "Realeza do deserto, mente afiada.", stats: { int: 2 }, slot: "head" },
-    { id: "visor", label: "VISEIRA", desc: "Corta o clarão e foca na pista.", stats: { spd: 1 }, slot: "snout" },
+    { id: "visor", label: "VISEIRA", desc: "Corta o clarão e foca na pista.", stats: { spd: 1 }, slot: "eye" },
     { id: "poncho", label: "PONCHO", desc: "Tecido largo que amortece pancadas.", stats: { hp: 2 }, slot: "chest" },
     { id: "spikes", label: "ESPINHOS", desc: "Dorso farpado, ninguém encosta de graça.", stats: { str: 1 }, slot: "back" },
-    { id: "goggles", label: "ÓCULOS DE MERGULHO", desc: "Pronto para poças imaginárias.", stats: { jump: 1 }, slot: "snout" },
+    { id: "goggles", label: "ÓCULOS DE MERGULHO", desc: "Pronto para poças imaginárias.", stats: { jump: 1 }, slot: "eye" },
     { id: "lei", label: "COLAR HAVAIANO", desc: "Flores no pescoço, ânimo no peito.", stats: { hp: 1 }, slot: "neck" },
     { id: "ribbon", label: "LAÇO", desc: "Laço na cauda, pulo mais solto.", stats: { jump: 1 }, slot: "tail" },
-    { id: "antenna", label: "ANTENA", desc: "Captura sinais de ovos distantes.", stats: { int: 1 }, slot: "head" },
+    { id: "antenna", label: "ANTENA", desc: "Captura sinais de ovos distantes.", stats: { int: 1 }, slot: "head", fit: { ux: 0.5, uy: -0.7 } },
     { id: "jetpack", label: "JETPACK", desc: "Foguetes nas costas, salto disparado.", stats: { jump: 2, spd: 1 }, slot: "back" },
     { id: "cowboy", label: "CHAPÉU COWBOY", desc: "Farwest no deserto do rex.", stats: { str: 1 }, slot: "head" },
     { id: "beanie", label: "TOUCA", desc: "Lã macia contra o vento da noite.", stats: { hp: 1 }, slot: "head" },
-    { id: "phones", label: "FONE", desc: "Batida interna, raciocínio externo.", stats: { int: 1 }, slot: "head" },
-    { id: "beads", label: "CONTAS", desc: "Colar de contas coloridas no peito.", stats: { hp: 1 }, slot: "chest" },
-    { id: "belt", label: "CINTO", desc: "Aperta o tronco e firma o golpe.", stats: { str: 1 }, slot: "chest" },
+    { id: "phones", label: "FONE", desc: "Batida interna, raciocínio externo.", stats: { int: 1 }, slot: "head", fit: { ux: 0.45, uy: 0.18 } },
+    { id: "beads", label: "CONTAS", desc: "Colar de contas coloridas no pescoço.", stats: { hp: 1 }, slot: "neck" },
+    { id: "belt", label: "CINTO", desc: "Aperta o tronco e firma o golpe.", stats: { str: 1 }, slot: "chest", fit: { ux: 0.5, uy: 0.72 } },
     { id: "socks", label: "MEIAS", desc: "Listras nos pés, passada mais leve.", stats: { spd: 1 }, slot: "feet" },
     { id: "sandals", label: "SANDÁLIAS", desc: "Dedos livres para impulsionar o salto.", stats: { jump: 1 }, slot: "feet" },
     { id: "tailspike", label: "ESPINHO CAUDAL", desc: "A cauda vira uma lança curta.", stats: { str: 1 }, slot: "tail" },
     { id: "plume", label: "PENA", desc: "Pluma nas costas, queda mais doce.", stats: { jump: 1 }, slot: "back" },
     { id: "splatter", label: "TINTA", desc: "Mancha artística no flanco.", stats: { int: 1 }, slot: "chest" },
-    { id: "patch", label: "TAPA-OLHO", desc: "Cara de pirata, golpe mais safado.", stats: { str: 1, int: 1 }, slot: "snout" },
+    { id: "patch", label: "TAPA-OLHO", desc: "Cara de pirata, golpe mais safado.", stats: { str: 1, int: 1 }, slot: "eye" },
     { id: "wizard", label: "CHAPÉU MAGO", desc: "Ponta torta, ideias em excesso.", stats: { int: 2 }, slot: "head" },
-    { id: "halo", label: "AURÉOLA", desc: "Um círculo de luz acima da crista.", stats: { hp: 1, int: 1 }, slot: "head" },
-    { id: "ramhorns", label: "CHIFRES", desc: "Dois chifres curvos só de enfeite feroz.", stats: { str: 2 }, slot: "head" },
+    { id: "halo", label: "AURÉOLA", desc: "Um círculo de luz acima da crista.", stats: { hp: 1, int: 1 }, slot: "head", fit: { ux: 0.45, uy: -0.75 } },
+    { id: "ramhorns", label: "CHIFRES", desc: "Dois chifres curvos só de enfeite feroz.", stats: { str: 2 }, slot: "head", fit: { ux: 0.4, uy: -0.1 } },
     { id: "snorkel", label: "SNORKEL", desc: "Tubo amarelo para respirar drama.", stats: { hp: 1 }, slot: "snout" },
-    { id: "monocle", label: "MONÓCULO", desc: "Um olho erudito, outro na pista.", stats: { int: 1 }, slot: "snout" },
+    { id: "monocle", label: "MONÓCULO", desc: "Um olho erudito, outro na pista.", stats: { int: 1 }, slot: "eye" },
     { id: "medal", label: "MEDALHA", desc: "Honra no peito, força no trombo.", stats: { str: 1 }, slot: "chest" },
     { id: "radio", label: "RÁDIO", desc: "Estatica nas costas, dicas mentais.", stats: { int: 1 }, slot: "back" },
     { id: "lantern", label: "LANTERNA", desc: "Facho no peito contra a noite.", stats: { int: 1 }, slot: "chest" },
@@ -80,11 +80,94 @@
     { id: "leaf", label: "FOLHA", desc: "Folha na cabeça, salto de brisa.", stats: { jump: 1 }, slot: "head" },
     { id: "bone", label: "OSSO", desc: "Osso na boca, mordida mais pesada.", stats: { str: 1 }, slot: "snout" },
     { id: "muffler", label: "ECHARPE", desc: "Voltas de lã que viram vida extra.", stats: { hp: 2 }, slot: "neck" },
-    { id: "prop", label: "HÉLICE", desc: "Hélice na crista, decolagem curta.", stats: { jump: 2 }, slot: "head" },
+    { id: "prop", label: "HÉLICE", desc: "Hélice na crista, decolagem curta.", stats: { jump: 2 }, slot: "head", fit: { ux: 0.45, uy: -0.65 } },
     { id: "saddle", label: "SELA", desc: "Sela no dorso, firmeza e vigor.", stats: { hp: 1, str: 1 }, slot: "back" }
   ];
 
   Dino.EFFECTS = Dino.EFFECTS.concat(Dino.COSMETICS);
+
+  Dino.HIDDEN_EFFECTS = {
+    doubleJump: "cape",
+    skate: "socks",
+    hat: "cowboy",
+    blaster: "visor",
+    shield: "poncho",
+    magnet: "antenna",
+    mini: "bubble",
+    titan: "ramhorns",
+    wings: "plume",
+    coffee: "phones",
+    spring: "prop",
+    clock: "monocle",
+    ghost: "halo",
+    balloon: "lei",
+    gravity: "saddle",
+    sword: "belt",
+    spear: "tailspike",
+    heart: "blossom",
+    boots: "sandals",
+    ice: "snorkel",
+    chili: "honey",
+    crystal: "wizard",
+    cloak: "muffler",
+    quake: "spikes",
+    horn: "bone",
+    star: "halo",
+    potion: "shroom",
+    scarf: "muffler",
+    shades: "patch",
+    mohawk: "bandana",
+    bowtie: "beads",
+    pack: "radio",
+    bandana: "mohawk",
+    hoop: "blossom",
+    stache: "bone",
+    cape: "flag",
+    bell: "ribbon",
+    blossom: "lei",
+    crown: "wizard",
+    visor: "goggles",
+    poncho: "scarf",
+    spikes: "tailspike",
+    goggles: "shades",
+    lei: "beads",
+    ribbon: "vine",
+    antenna: "radio",
+    jetpack: "prop",
+    cowboy: "beanie",
+    beanie: "crown",
+    phones: "radio",
+    beads: "hoop",
+    belt: "medal",
+    socks: "sandals",
+    sandals: "socks",
+    tailspike: "spikes",
+    plume: "leaf",
+    splatter: "honey",
+    patch: "shades",
+    wizard: "crown",
+    halo: "leaf",
+    ramhorns: "cowboy",
+    snorkel: "goggles",
+    monocle: "wizard",
+    medal: "belt",
+    radio: "antenna",
+    lantern: "halo",
+    flag: "cape",
+    vine: "ribbon",
+    shroom: "leaf",
+    honey: "splatter",
+    boltcap: "jetpack",
+    bubble: "shroom",
+    leaf: "plume",
+    bone: "stache",
+    muffler: "scarf",
+    prop: "jetpack",
+    saddle: "pack"
+  };
+  Dino.EFFECTS.forEach(function (e) {
+    if (Dino.HIDDEN_EFFECTS[e.id]) e.hidden = Dino.HIDDEN_EFFECTS[e.id];
+  });
 
   Dino.createPowerKit = function () {
     return {
@@ -122,10 +205,41 @@
     };
   };
 
-  Dino.crossedPickupThreshold = function (prevActual, actual) {
-    var interval = Dino.Config.pickupScoreInterval || 200;
+  Dino.pickupInterval = function (score, kit) {
+    var base = (Dino.Config && Dino.Config.pickupScoreInterval) || 200;
+    var growth = (Dino.Config && Dino.Config.pickupScoreGrowth) || 1.5;
+    var scale = (Dino.Config && Dino.Config.pickupScoreScale) || 2000;
+    var min = (Dino.Config && Dino.Config.pickupScoreMin) || 40;
+    var intel = 1;
+    var t;
+    if (typeof Dino.rpgStats === "function") {
+      intel = Math.max(1, Dino.rpgStats(kit).int);
+    }
+    t = Math.max(0, score || 0) / scale;
+    return Math.max(min, Math.round((base * Math.pow(growth, t)) / intel));
+  };
+
+  Dino.nextPickupScore = function (lastAt, kit) {
+    lastAt = lastAt || 0;
+    return lastAt + Dino.pickupInterval(lastAt, kit);
+  };
+
+  Dino.crossedPickupThreshold = function (prevActual, actual, kit, lastAt) {
+    var next;
     if (actual <= 0) return false;
-    return Math.floor(prevActual / interval) < Math.floor(actual / interval);
+    next = Dino.nextPickupScore(lastAt || 0, kit);
+    return prevActual < next && actual >= next;
+  };
+
+  Dino.applyEvolution = function (kit, id) {
+    var effect = Dino.effectById(id);
+    var applied = [id];
+    Dino.applyEffect(kit, id);
+    if (effect && effect.hidden && effect.hidden !== id) {
+      Dino.applyEffect(kit, effect.hidden);
+      applied.push(effect.hidden);
+    }
+    return applied;
   };
 
   function own(kit, id) {
@@ -509,26 +623,45 @@
     return 1.7 + (kit.gravity || 0) * 0.55;
   };
 
-  Dino.cosmeticPos = function (slot, xPos, yPos, ducking, index) {
+  Dino.COSMETIC_SLOTS = {
+    head: { part: "head", ux: 0.42, uy: -0.4 },
+    eye: { part: "eye", ux: 0.5, uy: 0.5 },
+    snout: { part: "head", ux: 0.96, uy: 0.42 },
+    back: { part: "torso", ux: 0.02, uy: 0.05 },
+    tail: { part: "torso", ux: -0.16, uy: 0.55 },
+    chest: { part: "torso", ux: 0.52, uy: 0.28 },
+    feet: { part: "feet", ux: 0.25, uy: 0.15 },
+    neck: { part: "head", ux: 0.12, uy: 0.95 }
+  };
+
+  Dino.cosmeticPos = function (slot, xPos, yPos, ducking, index, effect) {
     var pose = ducking ? "duck1" : "wait";
-    var map = {
-      head: { part: "head", ux: 0.35, uy: -0.55 },
-      snout: { part: "head", ux: 0.92, uy: 0.38 },
-      back: { part: "torso", ux: 0.02, uy: -0.25 },
-      tail: { part: "torso", ux: -0.14, uy: 0.5 },
-      chest: { part: "torso", ux: 0.48, uy: 0.18 },
-      feet: { part: "feet", ux: 0.05, uy: 0.1 },
-      neck: { part: "head", ux: 0.08, uy: 0.9 }
-    };
+    var map = Dino.COSMETIC_SLOTS;
     var spec = map[slot] || map.chest;
-    var p =
+    var ux = spec.ux;
+    var uy = spec.uy;
+    var part = spec.part;
+    var p;
+    var spr;
+    var b;
+    if (effect && effect.fit) {
+      if (effect.fit.part) part = effect.fit.part;
+      if (effect.fit.ux != null) ux = effect.fit.ux;
+      if (effect.fit.uy != null) uy = effect.fit.uy;
+    }
+    p =
       typeof Dino.trexPartPoint === "function"
-        ? Dino.trexPartPoint(pose, spec.part, spec.ux, spec.uy)
-        : { x: spec.ux * 20, y: spec.uy * 20 };
+        ? Dino.trexPartPoint(pose, part, ux, uy)
+        : { x: ux * 20, y: uy * 20 };
+    spr = effect && Dino.Sprites && Dino.Sprites.fx && Dino.Sprites.fx[effect.id];
+    b =
+      typeof Dino.spriteBounds === "function"
+        ? Dino.spriteBounds(spr)
+        : { x: 0, y: 0, w: 10, h: 10 };
     index = index || 0;
     return {
-      x: xPos + p.x,
-      y: yPos + p.y + index * (ducking ? 2 : 2)
+      x: xPos + p.x - (b.x + b.w / 2),
+      y: yPos + p.y - (b.y + b.h / 2) + index * 2
     };
   };
 
@@ -610,7 +743,7 @@
         if (!e.slot) continue;
         n = Math.min(3, Dino.effectCount(kit, e.id));
         for (s = 0; s < n; s++) {
-          pos = Dino.cosmeticPos(e.slot, xPos, yPos, ducking, s);
+          pos = Dino.cosmeticPos(e.slot, xPos, yPos, ducking, s, e);
           gear.cosmetics.push({
             id: e.id,
             slot: e.slot,

@@ -22,6 +22,25 @@ test("o jogo começa no estúdio de pintura do dino", function () {
   assert.equal(g.status, "RUNNING");
 });
 
+test("agachar no pulo cai na mesma velocidade", function () {
+  function yAfter(duck) {
+    var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
+    var i;
+    g.status = "RUNNING";
+    g.tRex.startJump(g.currentSpeed);
+    for (i = 0; i < 6; i++) {
+      g.update(16, 1000 + i * 16, { jumpPressed: false, duck: false });
+    }
+    assert.equal(g.tRex.jumping, true);
+    for (i = 0; i < 6; i++) {
+      g.update(16, 1100 + i * 16, { jumpPressed: false, duck: duck });
+    }
+    assert.equal(g.tRex.jumping, true);
+    return g.tRex.yPos;
+  }
+  assert.equal(yAfter(true), yAfter(false));
+});
+
 test("pintar um quadradinho não começa a corrida", function () {
   var g = Dino.createGameState({ innerWidth: 1920, innerHeight: 1080 });
   var studio = Dino.paintStudioLayout(g.layout);
@@ -150,12 +169,14 @@ test("escolher evolução deixa o dino imune proporcional à inteligência", fun
   g.hud.choice = g.choice;
   g.applyChoice(0);
   assert.equal(g.status, "RUNNING");
-  assert.equal(g.immuneMs, 500);
+  assert.equal(g.immuneMs, Dino.evolutionImmuneMs(g.kit));
+  assert.ok(Dino.effectCount(g.kit, Dino.effectById("doubleJump").hidden) >= 1);
   g.status = "CHOOSING";
   g.choice = { options: [Dino.effectById("coffee"), Dino.effectById("sword")], selected: 0 };
   g.hud.choice = g.choice;
   g.applyChoice(0);
-  assert.equal(g.immuneMs, 2000);
+  assert.equal(g.immuneMs, Dino.evolutionImmuneMs(g.kit));
+  assert.ok(Dino.rpgStats(g.kit).int >= 4);
 });
 
 test("estrela soma imunidade extra depois da evolução", function () {
@@ -164,7 +185,7 @@ test("estrela soma imunidade extra depois da evolução", function () {
   g.choice = { options: [Dino.effectById("star"), Dino.effectById("heart")], selected: 0 };
   g.hud.choice = g.choice;
   g.applyChoice(0);
-  assert.equal(g.immuneMs, 1000 + 1500);
+  assert.equal(g.immuneMs, Dino.evolutionImmuneMs(g.kit) + 1500);
 });
 
 test("imune atravessa cacto sem crash e sem gastar escudo", function () {

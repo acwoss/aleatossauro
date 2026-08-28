@@ -37,6 +37,7 @@
     this.isMobile = opts.isMobile != null ? opts.isMobile : isMobileViewport(innerWidth);
     this.kit = Dino.createPowerKit();
     this.pickups = [];
+    this.lastPickupScore = 0;
     this.bolts = [];
     this.blasterTimer = 0;
     this.immuneMs = 0;
@@ -64,6 +65,7 @@
   Game.prototype.resetKit = function () {
     this.kit = Dino.createPowerKit();
     this.pickups = [];
+    this.lastPickupScore = 0;
     this.bolts = [];
     this.blasterTimer = 0;
     this.attackCd = 0;
@@ -185,19 +187,23 @@
   Game.prototype.applyChoice = function (index) {
     if (!this.choice || !this.choice.options || !this.choice.options[index]) return;
     var effect = this.choice.options[index];
-    Dino.applyEffect(this.kit, effect.id);
+    var applied =
+      typeof Dino.applyEvolution === "function"
+        ? Dino.applyEvolution(this.kit, effect.id)
+        : (Dino.applyEffect(this.kit, effect.id), [effect.id]);
+    var i;
+    var id;
     Dino.syncTrexFromKit(this.tRex, this.kit);
-    if (effect.id === "skate") {
-      this.currentSpeed += 0.7;
-    }
-    if (effect.id === "boots") {
-      this.currentSpeed += 0.9;
+    for (i = 0; i < applied.length; i++) {
+      id = applied[i];
+      if (id === "skate") this.currentSpeed += 0.7;
+      if (id === "boots") this.currentSpeed += 0.9;
     }
     this.hud.announce(effect.label);
     this.choice = null;
     this.hud.choice = null;
     this.immuneMs = Dino.evolutionImmuneMs(this.kit);
-    if (effect.id === "star") this.immuneMs += 1500;
+    if (applied.indexOf("star") !== -1) this.immuneMs += 1500;
     this.status = "RUNNING";
   };
 
@@ -296,9 +302,7 @@
         this.immuneMs = Math.max(this.immuneMs, 300 * this.kit.cloak);
       }
     }
-    if (input.duck && this.tRex.jumping) {
-      this.tRex.setSpeedDrop();
-    } else if (input.duck && !this.tRex.jumping) {
+    if (input.duck && !this.tRex.jumping) {
       this.tRex.setDuck(true);
     } else if (!input.duck) {
       this.tRex.setDuck(false);
@@ -562,9 +566,7 @@
         this.immuneMs = Math.max(this.immuneMs, 300 * this.kit.cloak);
       }
     }
-    if (input.duck && this.tRex.jumping) {
-      this.tRex.setSpeedDrop();
-    } else if (input.duck && !this.tRex.jumping) {
+    if (input.duck && !this.tRex.jumping) {
       this.tRex.setDuck(true);
     } else if (!input.duck) {
       this.tRex.setDuck(false);
@@ -658,8 +660,14 @@
       this.hud.update(dt, this.distanceRan);
       return;
     }
-    if (Dino.crossedPickupThreshold(prevActual, Dino.getActualDistance(this.distanceRan))) {
+    if (Dino.crossedPickupThreshold(
+      prevActual,
+      Dino.getActualDistance(this.distanceRan),
+      this.kit,
+      this.lastPickupScore
+    )) {
       this.pickups.push(Dino.createPickup(this.layout.logicalWidth));
+      this.lastPickupScore = Dino.nextPickupScore(this.lastPickupScore, this.kit);
     }
     this.hud.update(dt, this.distanceRan);
     this.updateNight(dt);

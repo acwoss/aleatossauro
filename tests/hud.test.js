@@ -66,6 +66,10 @@ test("card de evolução desenha o que a opção faz", function () {
   hud.draw(ctx, 600, Dino.palette(false), false);
   assert.ok(texts.some(function (t) { return String(t).indexOf(coffee.desc.slice(0, 12)) !== -1; }));
   assert.ok(texts.some(function (t) { return String(t).indexOf("INT") !== -1; }));
+  var hidden = Dino.effectById(coffee.hidden);
+  if (hidden) {
+    assert.ok(texts.every(function (t) { return String(t).indexOf(hidden.label) === -1; }));
+  }
 });
 
 test("rpgStatEntries usa rótulos curtos de RPG", function () {

@@ -65,23 +65,23 @@ test("partes do dino nomeiam olho cabeça tronco braço pernas e pés", function
   ["eye", "head", "torso", "arm", "legs", "feet"].forEach(function (name) {
     assert.ok(wait[name] && wait[name].w > 0 && wait[name].h > 0, name);
   });
-  assert.equal(Dino.trexPartAt("wait", 22, 4), "eye");
+  assert.equal(Dino.trexPartAt("wait", 34, 4), "eye");
   assert.equal(Dino.trexPartAt("wait", 20, 2), "head");
   assert.equal(Dino.trexPartAt("wait", 18, 22), "arm");
   assert.equal(Dino.trexPartAt("wait", 18, 36), "legs");
   assert.equal(Dino.trexPartAt("wait", 18, 44), "feet");
-  assert.equal(Dino.trexPartAt("duck1", 34, 22), "eye");
+  assert.equal(Dino.trexPartAt("duck1", 48, 22), "eye");
   assert.equal(Dino.trexPartAt("duck1", 33, 19), "head");
   assert.equal(Dino.trexPartAt("duck1", 16, 43), "feet");
 });
 
 test("agachar amostra a pintura da mesma parte em espera", function () {
   var skin = Dino.createSkin("#2d6a3f");
-  Dino.paintSkin(skin, 22, 4, "#ffffff");
+  Dino.paintSkin(skin, 34, 4, "#ffffff");
   Dino.paintSkin(skin, 20, 2, "#e74c3c");
   Dino.paintSkin(skin, 18, 44, "#111111");
-  assert.equal(Dino.skinSample(skin, "wait", 22, 4), "#ffffff");
-  assert.equal(Dino.skinSample(skin, "duck1", 34, 22), "#ffffff");
+  assert.equal(Dino.skinSample(skin, "wait", 34, 4), "#ffffff");
+  assert.equal(Dino.skinSample(skin, "duck1", 48, 22), "#ffffff");
   assert.equal(Dino.skinSample(skin, "duck1", 32, 20), "#e74c3c");
   assert.equal(Dino.skinSample(skin, "duck1", 16, 43), "#111111");
 });
