@@ -21,3 +21,18 @@ test("frames do trex e obstáculos existem", function () {
   assert.ok(Dino.Sprites.nest.length > 2);
   assert.ok(Dino.Sprites.egg.length > 1);
 });
+
+test("cada efeito tem ícone de HUD 10x10", function () {
+  require("../js/config.js");
+  require("../js/collision.js");
+  var P = require("../js/powerups.js");
+  assert.ok(Dino.Sprites.fx);
+  P.EFFECTS.forEach(function (e) {
+    var icon = Dino.Sprites.fx[e.id];
+    assert.ok(icon && icon.length, "falta ícone " + e.id);
+    icon.forEach(function (r) {
+      assert.ok(r.x + r.w <= 10, e.id + " passa de 10px");
+      assert.ok(r.y + r.h <= 10, e.id + " passa de 10px");
+    });
+  });
+});

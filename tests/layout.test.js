@@ -9,7 +9,9 @@ test("desktop 1920x1080 aproxima 600 de largura lógica", function () {
   assert.ok(Math.abs(l.scale - 3.2) < 0.01);
   assert.equal(l.logicalWidth, 600);
   var leftover = 1080 - 150 * l.scale;
-  assert.ok(l.offsetY < leftover / 2);
+  assert.equal(l.offsetY, Math.round(leftover * 2 / 3));
+  assert.ok(l.offsetY > leftover / 2);
+  assert.ok(Math.abs((leftover - l.offsetY) / leftover - 1 / 3) < 0.02);
   assert.ok(l.viewHeight > 150);
 });
 

@@ -3,7 +3,7 @@
   Dino.computeLayout = function (innerWidth, innerHeight) {
     var scale = Dino.clamp(innerWidth / 600, 1, innerHeight * 0.45 / 150);
     var leftover = innerHeight - Dino.DEFAULT_HEIGHT * scale;
-    var offsetY = Math.round(Math.max(0, leftover) * 0.22);
+    var offsetY = Math.round(Math.max(0, leftover) * 2 / 3);
     return {
       scale: scale,
       logicalWidth: Math.round(innerWidth / scale),

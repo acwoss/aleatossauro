@@ -56,6 +56,7 @@
     this.kit = null;
     this.choice = null;
     this.boss = null;
+    this.speed = Dino.Config.speed || 6;
   }
 
   Hud.prototype.setHighScore = function (distanceRan) {
@@ -118,16 +119,121 @@
   Dino.CHOICE_SUBTITLE = "Escolha a sua evolução para tentar sobreviver";
 
   Dino.choiceCardRects = function (logicalWidth) {
-    var w = 132;
-    var h = 58;
-    var gap = 16;
-    var y = 42;
+    var w = 148;
+    var h = 102;
+    var gap = 12;
+    var y = 32;
     var total = w * 2 + gap;
     var x0 = Math.round((logicalWidth - total) / 2);
     return [
       { x: x0, y: y, w: w, h: h },
       { x: x0 + w + gap, y: y, w: w, h: h }
     ];
+  };
+
+  Dino.rpgStatEntries = function (stats) {
+    stats = stats || {};
+    var hp = stats.hp || 0;
+    var hpMax = stats.hpMax || hp;
+    return [
+      { id: "str", icon: "sword", label: "FORÇA", value: String(stats.str || 0) },
+      { id: "spd", icon: "boots", label: "VEL", value: String(stats.spd || 0) },
+      { id: "hp", icon: "heart", label: "VIDA", value: hp + "/" + hpMax },
+      { id: "jump", icon: "doubleJump", label: "PULO", value: String(stats.jump || 0) },
+      { id: "int", icon: "crystal", label: "INT", value: String(stats.int || 0) }
+    ];
+  };
+
+  Dino.rpgStatCardLayout = function (x, y, stats) {
+    var entries = Dino.rpgStatEntries(stats);
+    var padX = 6;
+    var padY = 4;
+    var icon = 10;
+    var gapIconVal = 2;
+    var gapSlot = 8;
+    var charW = 5;
+    var slots = [];
+    var cursor = x + padX;
+    var i;
+    var entry;
+    var valueW;
+    var innerY = y + padY;
+    for (i = 0; i < entries.length; i++) {
+      entry = entries[i];
+      valueW = Math.max(10, entry.value.length * charW);
+      slots.push({
+        id: entry.id,
+        icon: entry.icon,
+        value: entry.value,
+        iconX: cursor,
+        iconY: innerY,
+        valueX: cursor + icon + gapIconVal,
+        valueY: innerY + 1
+      });
+      cursor += icon + gapIconVal + valueW + gapSlot;
+    }
+    return {
+      x: x,
+      y: y,
+      w: cursor - gapSlot + padX - x,
+      h: icon + padY * 2,
+      slots: slots
+    };
+  };
+
+  Dino.wrapWords = function (text, maxLen) {
+    var words = String(text || "").split(/\s+/);
+    var lines = [];
+    var cur = "";
+    var i;
+    maxLen = maxLen || 24;
+    for (i = 0; i < words.length; i++) {
+      if (!words[i]) continue;
+      if (cur && (cur + " " + words[i]).length > maxLen) {
+        lines.push(cur);
+        cur = words[i];
+      } else {
+        cur = cur ? cur + " " + words[i] : words[i];
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  };
+
+  Dino.hudIconLayout = function (items, originX, originY, maxX) {
+    var size = 10;
+    var slot = 16;
+    var rowH = 14;
+    var x = originX;
+    var y = originY;
+    var i;
+    var out = [];
+    items = items || [];
+    for (i = 0; i < items.length; i++) {
+      if (i > 0 && x + slot > maxX) {
+        x = originX;
+        y += rowH;
+      }
+      out.push({
+        id: items[i].id,
+        count: items[i].count,
+        x: x,
+        y: y,
+        size: size
+      });
+      x += slot;
+    }
+    return out;
+  };
+
+  Dino.drawFxIcon = function (ctx, id, x, y, palette) {
+    var rects = Dino.Sprites.fx && Dino.Sprites.fx[id];
+    if (!rects) return;
+    var color =
+      typeof Dino.effectInk === "function"
+        ? Dino.effectInk(id, palette)
+        : (palette && palette.hud) || "#1e3a4c";
+    Dino.drawRects(ctx, rects, x, y, color);
   };
 
   Dino.hitChoiceCard = function (x, y, logicalWidth) {
@@ -158,7 +264,13 @@
     var i;
     var n = this.digits.length;
     var scoreX = logicalWidth - dest * (n + 1);
+    var hiX = scoreX - dest * (n + 4);
     var ink = palette.hud;
+    var iconMax = (this.highScore > 0 ? hiX : scoreX) - 8;
+    var items;
+    var slots;
+    var statsY = 18;
+    var stats;
     if (this.paint) {
       for (i = 0; i < n; i++) {
         this.drawDigit(
@@ -172,7 +284,6 @@
     }
     if (this.highScore > 0) {
       var hiStr = pad(this.highScore, n);
-      var hiX = scoreX - dest * (n + 4);
       ctx.save();
       ctx.globalAlpha = 0.8;
       this.drawDigit(ctx, Dino.Sprites.hiH, hiX, y, ink);
@@ -187,6 +298,30 @@
         );
       }
       ctx.restore();
+    }
+    items = Dino.kitHudItems ? Dino.kitHudItems(this.kit) : [];
+    slots = Dino.hudIconLayout(items, 6, 3, Math.max(40, iconMax));
+    if (slots.length && !this.choice) {
+      ctx.save();
+      ctx.font = "7px Courier New, monospace";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillStyle = ink;
+      for (i = 0; i < slots.length; i++) {
+        Dino.drawFxIcon(ctx, slots[i].id, slots[i].x, slots[i].y, palette);
+        if (slots[i].count > 1) {
+          ctx.fillText(String(slots[i].count), slots[i].x + 11, slots[i].y + 3);
+        }
+      }
+      ctx.restore();
+      statsY = slots[slots.length - 1].y + 14;
+    }
+    if (!this.choice) {
+      stats = Dino.rpgStats
+        ? Dino.rpgStats(this.kit, { speed: this.speed })
+        : { str: 1, spd: 6, hp: 1, hpMax: 1, jump: 1, int: 1 };
+      var statCard = this.drawRpgStats(ctx, 6, statsY, stats, palette);
+      statsY = statCard.y + statCard.h + 6;
     }
     if (crashed) {
       ctx.save();
@@ -210,55 +345,66 @@
       ctx.font = "bold 11px Courier New, monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(this.toast, logicalWidth / 2, 28);
+      ctx.fillText(this.toast, logicalWidth / 2, statsY + 22);
       ctx.restore();
     }
-    if (this.kit && this.kit.owned.length && !this.boss) {
-      ctx.save();
-      ctx.fillStyle = ink;
-      ctx.font = "8px Courier New, monospace";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "top";
-      var labels = [];
-      var e;
-      var count;
-      for (i = 0; i < this.kit.owned.length; i++) {
-        e = Dino.effectById(this.kit.owned[i]);
-        count = Dino.effectCount ? Dino.effectCount(this.kit, this.kit.owned[i]) : 1;
-        if (e && count > 0) labels.push(count > 1 ? e.label + " x" + count : e.label);
-      }
-      ctx.fillText(labels.join("  ·  "), 8, 22);
-      ctx.restore();
-    }
-    if (this.boss) {
-      this.drawBoss(ctx, logicalWidth, palette);
+    if (this.boss && !this.choice) {
+      this.drawBoss(ctx, logicalWidth, palette, statsY + 12);
     }
     if (this.choice && this.choice.options && this.choice.options.length) {
       this.drawChoice(ctx, logicalWidth, palette);
     }
   };
 
-  Hud.prototype.drawBoss = function (ctx, logicalWidth, palette) {
+  Hud.prototype.drawRpgStats = function (ctx, x, y, stats, palette) {
+    var card = Dino.rpgStatCardLayout(x, y, stats);
+    var i;
+    var slot;
+    palette = palette || {};
+    ctx.save();
+    ctx.fillStyle = palette.sand || "#f4e4c1";
+    ctx.fillRect(card.x, card.y, card.w, card.h);
+    ctx.fillStyle = palette.crate || "#e2b007";
+    ctx.fillRect(card.x, card.y, 3, card.h);
+    ctx.strokeStyle = palette.hud || "#1e3a4c";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(card.x + 0.5, card.y + 0.5, card.w - 1, card.h - 1);
+    ctx.font = "bold 8px Courier New, monospace";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = palette.hud || "#1e3a4c";
+    for (i = 0; i < card.slots.length; i++) {
+      slot = card.slots[i];
+      Dino.drawFxIcon(ctx, slot.icon, slot.iconX, slot.iconY, palette);
+      ctx.fillStyle = palette.hud || "#1e3a4c";
+      ctx.fillText(slot.value, slot.valueX, slot.valueY);
+    }
+    ctx.restore();
+    return card;
+  };
+
+  Hud.prototype.drawBoss = function (ctx, logicalWidth, palette, topY) {
     var boss = this.boss;
     var barW = 160;
     var x = Math.round((logicalWidth - barW) / 2);
     var ratio = boss.maxHp ? boss.hp / boss.maxHp : 0;
+    var y = topY == null ? 14 : topY;
     ctx.save();
     ctx.fillStyle = palette.hud;
     ctx.font = "bold 9px Courier New, monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("BOSS  " + (boss.name || ""), logicalWidth / 2, 14);
+    ctx.fillText("BOSS  " + (boss.name || ""), logicalWidth / 2, y);
     ctx.fillStyle = palette.sand;
-    ctx.fillRect(x, 22, barW, 7);
+    ctx.fillRect(x, y + 8, barW, 7);
     ctx.fillStyle = palette.crate;
-    ctx.fillRect(x, 22, Math.max(0, Math.round(barW * ratio)), 7);
+    ctx.fillRect(x, y + 8, Math.max(0, Math.round(barW * ratio)), 7);
     ctx.strokeStyle = palette.hud;
     ctx.lineWidth = 1;
-    ctx.strokeRect(x + 0.5, 22.5, barW - 1, 6);
+    ctx.strokeRect(x + 0.5, y + 8.5, barW - 1, 6);
     ctx.fillStyle = palette.hud;
     ctx.font = "8px Courier New, monospace";
-    ctx.fillText("pulo na cabeça · setas para mover", logicalWidth / 2, 36);
+    ctx.fillText("pulo na cabeça · setas para mover", logicalWidth / 2, y + 22);
     ctx.restore();
   };
 
@@ -288,11 +434,20 @@
       ctx.strokeStyle = palette.hud;
       ctx.lineWidth = 2;
       ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
+      if (opt) Dino.drawFxIcon(ctx, opt.id, r.x + Math.round(r.w / 2) - 5, r.y + 8, palette);
       ctx.fillStyle = palette.hud;
-      ctx.font = "bold 11px Courier New, monospace";
-      ctx.fillText(opt ? opt.label : "", r.x + r.w / 2, r.y + 24);
-      ctx.font = "8px Courier New, monospace";
-      ctx.fillText("clique", r.x + r.w / 2, r.y + 42);
+      ctx.font = "bold 10px Courier New, monospace";
+      ctx.fillText(opt ? opt.label : "", r.x + r.w / 2, r.y + 28);
+      ctx.font = "7px Courier New, monospace";
+      var lines = Dino.wrapWords(opt && opt.desc ? opt.desc : "", 22).slice(0, 2);
+      var li;
+      for (li = 0; li < lines.length; li++) {
+        ctx.fillText(lines[li], r.x + r.w / 2, r.y + 44 + li * 10);
+      }
+      ctx.font = "bold 8px Courier New, monospace";
+      ctx.fillText(opt && Dino.effectStatLine ? Dino.effectStatLine(opt) : "", r.x + r.w / 2, r.y + 68);
+      ctx.font = "7px Courier New, monospace";
+      ctx.fillText("clique", r.x + r.w / 2, r.y + 86);
     }
     ctx.restore();
   };

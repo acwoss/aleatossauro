@@ -12,7 +12,7 @@ test("há pelo menos 25 efeitos sorteáveis", function () {
     "magnet", "mini", "titan", "wings", "coffee",
     "spring", "clock", "ghost", "balloon", "gravity",
     "sword", "spear", "heart", "boots", "ice",
-    "chili", "crystal", "cloak", "quake", "horn", "star"
+    "chili", "crystal", "cloak", "quake", "horn", "star", "potion"
   ].forEach(function (id) {
     assert.ok(ids.indexOf(id) !== -1, "falta efeito " + id);
   });
@@ -51,28 +51,28 @@ test("rollEffect usa o rng e aplica o id", function () {
   assert.equal(calls, 1);
 });
 
-test("resolveObstacleHit consome escudo, depois fantasma, depois titã em cacto pequeno", function () {
+test("resolveObstacleHit tira vida e só derruba em 0", function () {
   var kit = Dino.createPowerKit();
-  Dino.applyEffect(kit, "shield");
-  Dino.applyEffect(kit, "ghost");
-  Dino.applyEffect(kit, "titan");
-  var small = { typeConfig: { type: "cactusSmall" } };
   var large = { typeConfig: { type: "cactusLarge" } };
-  assert.equal(Dino.resolveObstacleHit(kit, large), "shield");
-  assert.equal(kit.shields, 0);
-  assert.equal(Dino.resolveObstacleHit(kit, large), "ghost");
-  assert.equal(kit.ghosts, 0);
+  var small = { typeConfig: { type: "cactusSmall" } };
+  assert.equal(kit.hp, 1);
+  Dino.applyEffect(kit, "heart");
+  assert.ok(kit.hp > 1);
+  assert.equal(Dino.resolveObstacleHit(kit, large), "hurt");
+  Dino.applyEffect(kit, "titan");
   assert.equal(Dino.resolveObstacleHit(kit, small), "stomp");
+  kit.hp = 1;
   assert.equal(Dino.resolveObstacleHit(kit, large), "crash");
+  assert.equal(kit.hp, 0);
 });
 
 test("ímã puxa o pickup em direção ao dino", function () {
   var kit = Dino.createPowerKit();
   Dino.applyEffect(kit, "magnet");
-  var pickup = { xPos: 200, yPos: 80, width: 16, height: 16, remove: false };
+  var pickup = { xPos: 110, yPos: 80, width: 16, height: 16, remove: false };
   var tRex = { xPos: 50, yPos: 93, config: { width: 44, height: 47 } };
   Dino.updatePickup(pickup, 16.67, 6, kit, tRex);
-  assert.ok(pickup.xPos < 200);
+  assert.ok(pickup.xPos < 110);
 });
 
 test("ímã puxa o ovo para cima quando o dino está no ar", function () {
@@ -108,6 +108,29 @@ test("ímã forte não atravessa o dino no pulo", function () {
   Dino.updatePickup(pickup, 16.67, 6, kit, tRex);
   assert.equal(pickup.remove, false);
   assert.ok(Dino.pickupHitsTrex(pickup, tRex));
+});
+
+test("alcance do ímã cresce a cada pilha", function () {
+  assert.equal(Dino.magnetRange({ magnet: 0 }), 0);
+  assert.ok(Dino.magnetRange({ magnet: 1 }) > 0);
+  assert.ok(Dino.magnetRange({ magnet: 2 }) > Dino.magnetRange({ magnet: 1 }));
+  assert.ok(Dino.magnetRange({ magnet: 3 }) > Dino.magnetRange({ magnet: 2 }));
+});
+
+test("1 ímã só puxa de perto; mais ímãs alcançam mais longe", function () {
+  var tRex = { xPos: 50, yPos: 93, config: { width: 44, height: 47 } };
+  var far = { xPos: 200, yPos: 80, width: 16, height: 16, remove: false };
+  var kit1 = Dino.createPowerKit();
+  Dino.applyEffect(kit1, "magnet");
+  var x0 = far.xPos;
+  Dino.updatePickup(far, 16.67, 0, kit1, tRex);
+  assert.equal(far.xPos, x0);
+  var kit3 = Dino.createPowerKit();
+  Dino.applyEffect(kit3, "magnet");
+  Dino.applyEffect(kit3, "magnet");
+  Dino.applyEffect(kit3, "magnet");
+  Dino.updatePickup(far, 16.67, 0, kit3, tRex);
+  assert.ok(far.xPos < x0);
 });
 
 test("ovo fica no chão e não flutua", function () {
@@ -278,13 +301,26 @@ test("espada e lança geram hitbox à frente do dino", function () {
   assert.ok(left[0].x < tRex.xPos);
 });
 
-test("coração absorve um hit depois do fantasma", function () {
+test("coração aumenta a vida máxima e o hit só reduz HP", function () {
   var kit = Dino.createPowerKit();
   Dino.applyEffect(kit, "heart");
   var large = { typeConfig: { type: "cactusLarge" } };
-  assert.equal(Dino.resolveObstacleHit(kit, large), "heart");
-  assert.equal(kit.hearts, 0);
-  assert.equal(Dino.resolveObstacleHit(kit, large), "crash");
+  assert.ok(kit.hp > 1);
+  assert.equal(Dino.resolveObstacleHit(kit, large), "hurt");
+  assert.ok(kit.hp > 1);
+  assert.equal(kit.hearts, 1);
+});
+
+test("poção cura 5 de vida", function () {
+  var kit = Dino.createPowerKit();
+  assert.equal(kit.hp, 1);
+  Dino.applyEffect(kit, "potion");
+  assert.equal(kit.potions, 1);
+  assert.equal(kit.hp, 6);
+  assert.equal(kit.hpMax, 6);
+  var e = Dino.effectById("potion");
+  assert.equal(e.stats.hp, 5);
+  assert.ok(Dino.effectStatLine(e).indexOf("+5 VIDA") !== -1);
 });
 
 test("canAttack só com arma ou blaster", function () {
@@ -292,4 +328,69 @@ test("canAttack só com arma ou blaster", function () {
   assert.equal(Dino.canAttack(kit), false);
   Dino.applyEffect(kit, "sword");
   assert.equal(Dino.canAttack(kit), true);
+});
+
+test("rpgStats parte de força 1, vel 6, vida 1, pulo 1 e int 1", function () {
+  var s = Dino.rpgStats(Dino.createPowerKit());
+  assert.equal(s.str, 1);
+  assert.equal(s.spd, 6);
+  assert.equal(s.hp, 1);
+  assert.equal(s.hpMax, 1);
+  assert.equal(s.jump, 1);
+  assert.equal(s.int, 1);
+});
+
+test("rpgStats escala força, velocidade, vida, pulo e inteligência", function () {
+  var kit = Dino.createPowerKit();
+  Dino.applyEffect(kit, "gravity");
+  Dino.applyEffect(kit, "sword");
+  Dino.applyEffect(kit, "skate");
+  Dino.applyEffect(kit, "heart");
+  Dino.applyEffect(kit, "doubleJump");
+  Dino.applyEffect(kit, "coffee");
+  var s = Dino.rpgStats(kit);
+  assert.ok(s.str >= 3);
+  assert.equal(s.spd, 7);
+  assert.ok(s.hpMax > 3);
+  assert.equal(s.hp, s.hpMax);
+  assert.ok(s.jump >= 2);
+  assert.ok(s.int >= 4);
+});
+
+test("café dá mais inteligência que o ímã", function () {
+  var cafe = Dino.createPowerKit();
+  var ima = Dino.createPowerKit();
+  Dino.applyEffect(cafe, "coffee");
+  Dino.applyEffect(ima, "magnet");
+  assert.ok(Dino.rpgStats(cafe).int > Dino.rpgStats(ima).int);
+});
+
+test("titã rende mais de um atributo e chapéu rende menos no total", function () {
+  var titan = Dino.effectById("titan").stats;
+  var hat = Dino.effectById("hat").stats;
+  assert.ok(titan.str >= 1 && titan.hp >= 1);
+  function total(s) {
+    return (s.str || 0) + (s.spd || 0) + (s.hp || 0) + (s.jump || 0) + (s.int || 0);
+  }
+  assert.ok(total(titan) > total(hat));
+});
+
+test("toda evolução tem descrição do que faz", function () {
+  Dino.EFFECTS.forEach(function (e) {
+    assert.ok(e.desc && e.desc.length > 8, "falta desc " + e.id);
+    assert.ok(e.stats, "falta stats " + e.id);
+    assert.ok(Dino.effectStatLine(e).indexOf("+") !== -1, "falta linha de atributo " + e.id);
+  });
+});
+
+test("kitHudItems lista ícones com contagem e ignora esgotados", function () {
+  var kit = Dino.createPowerKit();
+  Dino.applyEffect(kit, "shield");
+  Dino.applyEffect(kit, "shield");
+  Dino.applyEffect(kit, "sword");
+  kit.shields = 0;
+  var items = Dino.kitHudItems(kit);
+  assert.equal(items.length, 1);
+  assert.equal(items[0].id, "sword");
+  assert.equal(items[0].count, 1);
 });

@@ -96,6 +96,7 @@
   };
 
   Dino.bossAttackDamage = function (kit) {
+    if (typeof Dino.rpgStats === "function") return Dino.rpgStats(kit).str;
     return 1 + ((kit && kit.gravity) || 0);
   };
 

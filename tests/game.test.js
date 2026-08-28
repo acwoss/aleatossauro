@@ -118,7 +118,7 @@ test("imune atravessa cacto sem crash e sem gastar escudo", function () {
   assert.ok(g.immuneMs > 2900);
 });
 
-test("depois da imunidade o cacto mata de novo", function () {
+test("depois da imunidade o cacto mata com 1 de vida", function () {
   var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
   g.status = "RUNNING";
   g.runningTime = 4000;
@@ -133,6 +133,27 @@ test("depois da imunidade o cacto mata de novo", function () {
   g.obstacles = [cactus];
   g.update(16, 1000, { jumpPressed: false, duck: false });
   assert.equal(g.status, "CRASHED");
+  assert.equal(g.kit.hp, 0);
+});
+
+test("com vida extra o cacto fere e não mata", function () {
+  var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
+  g.status = "RUNNING";
+  g.runningTime = 4000;
+  g.immuneMs = 0;
+  Dino.applyEffect(g.kit, "heart");
+  Dino.syncTrexFromKit(g.tRex, g.kit);
+  g.tRex.update(0, Dino.TrexStatus.RUNNING);
+  var cactusType = Dino.OBSTACLE_TYPES.filter(function (t) { return t.type === "cactusSmall"; })[0];
+  var cactus = new Dino.Obstacle(cactusType, g.tRex.xPos, 0.6, 6, false);
+  cactus.xPos = g.tRex.xPos + 8;
+  cactus.size = 1;
+  cactus.width = cactusType.width;
+  cactus.cloneCollisionBoxes();
+  g.obstacles = [cactus];
+  g.update(16, 1000, { jumpPressed: false, duck: false });
+  assert.equal(g.status, "RUNNING");
+  assert.ok(g.kit.hp >= 1);
 });
 
 test("imunidade acaba após 3s", function () {
@@ -160,23 +181,30 @@ test("ímã no pulo abre a escolha em vez de sumir com o ovo", function () {
   assert.ok(g.choice && g.choice.options.length === 2);
 });
 
-test("pedra só some quando tira um skate", function () {
+test("pedra tira skate ou vida", function () {
   var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
   g.status = "RUNNING";
   g.runningTime = 0;
+  Dino.applyEffect(g.kit, "heart");
+  Dino.syncTrexFromKit(g.tRex, g.kit);
   g.tRex.update(0, Dino.TrexStatus.RUNNING);
   var rockType = Dino.OBSTACLE_TYPES.filter(function (t) { return t.type === "rock"; })[0];
   var rock = new Dino.Obstacle(rockType, g.tRex.xPos, 0.6, 6, false);
   rock.xPos = g.tRex.xPos + 12;
   g.obstacles = [rock];
   g.kit.skate = 0;
+  var hp = g.kit.hp;
   g.update(16, 1000, { jumpPressed: false, duck: false });
   assert.equal(g.status, "RUNNING");
-  assert.equal(g.obstacles.length, 1);
+  assert.ok(g.kit.hp < hp);
+  rock = new Dino.Obstacle(rockType, g.tRex.xPos, 0.6, 6, false);
   rock.xPos = g.tRex.xPos + 12;
+  g.obstacles = [rock];
+  hp = g.kit.hp;
   g.kit.skate = 2;
   g.update(16, 1020, { jumpPressed: false, duck: false });
   assert.equal(g.kit.skate, 1);
+  assert.equal(g.kit.hp, hp);
   assert.equal(g.obstacles.filter(function (o) { return !o.remove; }).length, 0);
 });
 
@@ -223,7 +251,7 @@ test("blaster só atira com firePressed", function () {
   assert.ok(g.bolts.length >= 1);
 });
 
-test("ataque no boss causa 1 mais gravidades", function () {
+test("ataque no boss causa a força do kit", function () {
   var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
   g.startBoss();
   Dino.applyEffect(g.kit, "sword");
@@ -231,7 +259,7 @@ test("ataque no boss causa 1 mais gravidades", function () {
   Dino.applyEffect(g.kit, "gravity");
   g.tRex.xPos = g.fight.boss.xPos - 40;
   g.tRex.facing = 1;
-  var hp = g.fight.boss.hp;
+  g.fight.boss.hp = 20;
   g.tryAttack();
-  assert.equal(g.fight.boss.hp, hp - 3);
+  assert.equal(g.fight.boss.hp, 13);
 });

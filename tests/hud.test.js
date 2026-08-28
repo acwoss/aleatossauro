@@ -1,7 +1,9 @@
 var test = require("node:test");
 var assert = require("node:assert/strict");
 require("../js/config.js");
+require("../js/collision.js");
 require("../js/sprites.js");
+require("../js/powerups.js");
 var Dino = require("../js/hud.js");
 
 test("getActualDistance usa coeficiente 0.025", function () {
@@ -40,4 +42,107 @@ test("título da escolha fala em ovo e evolução, não efeito", function () {
   assert.ok(Dino.CHOICE_TITLE.toLowerCase().indexOf("efeito") === -1);
   assert.ok(Dino.CHOICE_SUBTITLE.toLowerCase().indexOf("evolução") !== -1);
   assert.ok(Dino.CHOICE_SUBTITLE.toLowerCase().indexOf("efeito") === -1);
+});
+
+test("card de evolução desenha o que a opção faz", function () {
+  var texts = [];
+  var ctx = {
+    save: function () {},
+    restore: function () {},
+    fillRect: function () {},
+    fillText: function (t) { texts.push(String(t)); },
+    strokeRect: function () {},
+    font: "",
+    textAlign: "",
+    textBaseline: "",
+    globalAlpha: 1,
+    lineWidth: 1,
+    strokeStyle: "",
+    fillStyle: ""
+  };
+  var hud = new Dino.Hud();
+  var coffee = Dino.effectById("coffee");
+  hud.choice = { options: [coffee, Dino.effectById("sword")] };
+  hud.draw(ctx, 600, Dino.palette(false), false);
+  assert.ok(texts.some(function (t) { return String(t).indexOf(coffee.desc.slice(0, 12)) !== -1; }));
+  assert.ok(texts.some(function (t) { return String(t).indexOf("INT") !== -1; }));
+});
+
+test("rpgStatEntries usa rótulos curtos de RPG", function () {
+  var rows = Dino.rpgStatEntries({ str: 4, spd: 8, hp: 3, hpMax: 5, jump: 2, int: 6 });
+  assert.deepEqual(
+    rows.map(function (r) { return r.label; }),
+    ["FORÇA", "VEL", "VIDA", "PULO", "INT"]
+  );
+  assert.deepEqual(
+    rows.map(function (r) { return r.value; }),
+    ["4", "8", "3/5", "2", "6"]
+  );
+  assert.deepEqual(
+    rows.map(function (r) { return r.icon; }),
+    ["sword", "boots", "heart", "doubleJump", "crystal"]
+  );
+});
+
+test("card de atributos fica numa linha só", function () {
+  var card = Dino.rpgStatCardLayout(6, 18, {
+    str: 4, spd: 8, hp: 3, hpMax: 5, jump: 2, int: 6
+  });
+  assert.equal(card.slots.length, 5);
+  card.slots.forEach(function (slot) {
+    assert.equal(slot.iconY, card.slots[0].iconY);
+    assert.ok(slot.iconX >= card.x);
+    assert.ok(slot.valueX > slot.iconX);
+  });
+  assert.ok(card.w > card.h);
+  assert.ok(card.w < 280);
+});
+
+test("ícones do kit ficam à esquerda e não invadem o score", function () {
+  var kit = Dino.createPowerKit();
+  Dino.applyEffect(kit, "sword");
+  Dino.applyEffect(kit, "gravity");
+  Dino.applyEffect(kit, "hat");
+  var layout = Dino.hudIconLayout(Dino.kitHudItems(kit), 8, 3, 220);
+  assert.ok(layout.length >= 3);
+  layout.forEach(function (slot) {
+    assert.ok(slot.x + slot.size <= 220);
+    assert.ok(slot.y < 40);
+  });
+});
+
+test("HUD desenha atributos e ícones, não a lista de nomes", function () {
+  var texts = [];
+  var strokes = [];
+  var ctx = {
+    save: function () {},
+    restore: function () {},
+    fillRect: function () {},
+    fillText: function (t) { texts.push(String(t)); },
+    strokeRect: function (x, y, w, h) { strokes.push([x, y, w, h]); },
+    font: "",
+    textAlign: "",
+    textBaseline: "",
+    globalAlpha: 1,
+    lineWidth: 1,
+    strokeStyle: "",
+    fillStyle: ""
+  };
+  var hud = new Dino.Hud();
+  var kit = Dino.createPowerKit();
+  Dino.applyEffect(kit, "sword");
+  hud.kit = kit;
+  hud.draw(ctx, 600, Dino.palette(false), false);
+  var stats = Dino.rpgStats(kit, { speed: hud.speed });
+  assert.ok(texts.some(function (t) { return t === String(stats.str); }));
+  assert.ok(texts.some(function (t) { return t === stats.hp + "/" + stats.hpMax; }));
+  assert.ok(texts.every(function (t) { return t.indexOf("FORÇA") === -1; }));
+  assert.ok(texts.every(function (t) { return t.indexOf("VIDA") === -1; }));
+  assert.ok(texts.every(function (t) { return t.indexOf("INT") === -1; }));
+  assert.ok(strokes.length >= 1);
+  assert.ok(strokes[0][2] > strokes[0][3]);
+  assert.equal(
+    texts.filter(function (t) { return t.indexOf("ESPADA") !== -1; }).length,
+    0
+  );
 });

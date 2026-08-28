@@ -54,6 +54,7 @@
     attackCooldown: 260,
     blasterInterval: 700,
     blasterAmmo: 6,
+    baseHp: 1,
     bg: "#9ed8f2",
     fg: "#2d6a3f",
     storageKey: "aleatossauro-hi"

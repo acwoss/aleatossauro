@@ -3,6 +3,7 @@ var assert = require("node:assert/strict");
 require("../js/config.js");
 require("../js/collision.js");
 require("../js/sprites.js");
+require("../js/powerups.js");
 var Dino = require("../js/boss.js");
 
 test("cruzar 5000 pontos dispara o boss", function () {
@@ -47,11 +48,15 @@ test("pulo na cabeça do boss causa dano", function () {
   assert.equal(fight.boss.state, "hurt");
 });
 
-test("dano no boss é 1 mais o número de gravidades", function () {
+test("dano no boss segue a força das evoluções", function () {
   assert.equal(Dino.bossAttackDamage({}), 1);
   assert.equal(Dino.bossAttackDamage({ gravity: 0 }), 1);
-  assert.equal(Dino.bossAttackDamage({ gravity: 1 }), 2);
-  assert.equal(Dino.bossAttackDamage({ gravity: 4 }), 5);
+  assert.equal(Dino.bossAttackDamage({ gravity: 1 }), 3);
+  assert.equal(Dino.bossAttackDamage({ gravity: 4 }), 9);
+});
+
+test("força de espada também aumenta o dano no boss", function () {
+  assert.equal(Dino.bossAttackDamage({ gravity: 1, sword: 2 }), 7);
 });
 
 test("contato de lado com o boss não é stomp", function () {

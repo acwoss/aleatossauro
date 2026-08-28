@@ -517,8 +517,8 @@
             this.currentSpeed = Math.max(Dino.Config.speed, this.currentSpeed - 0.7);
             front.remove = true;
             Dino.syncTrexFromKit(this.tRex, this.kit);
+            continue;
           }
-          continue;
         }
         var hit = Dino.resolveObstacleHit(this.kit, front);
         if (hit === "crash") {
@@ -616,6 +616,7 @@
     }
     this.tRex.immuneMs = this.immuneMs;
     this.tRex.draw(ctx, colors);
+    this.hud.speed = this.currentSpeed;
     this.hud.draw(
       ctx,
       this.layout.logicalWidth,
