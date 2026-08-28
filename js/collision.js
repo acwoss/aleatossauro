@@ -42,11 +42,17 @@
   ];
 
   Dino.checkForCollision = function (tRex, obstacle) {
+    var s = tRex.drawScale > 0 ? tRex.drawScale : 1;
+    var standH = Dino.Config ? Dino.Config.trexHeight : tRex.config.height;
+    var standW = tRex.ducking && Dino.Config
+      ? Dino.Config.trexWidthDuck
+      : tRex.config.width;
+    var top = tRex.yPos + standH - standH * s;
     var tRexBox = new CollisionBox(
-      tRex.xPos + 1,
-      tRex.yPos + 1,
-      tRex.config.width - 2,
-      tRex.config.height - 2
+      tRex.xPos + s,
+      top + s,
+      standW * s - 2 * s,
+      standH * s - 2 * s
     );
     var obstacleBox = new CollisionBox(
       obstacle.xPos + 1,
@@ -60,7 +66,12 @@
     var j;
     for (i = 0; i < tRexBoxes.length; i++) {
       for (j = 0; j < obstacle.collisionBoxes.length; j++) {
-        var adjTrex = Dino.createAdjustedCollisionBox(tRexBoxes[i], tRexBox);
+        var adjTrex = new CollisionBox(
+          tRex.xPos + tRexBoxes[i].x * s,
+          top + tRexBoxes[i].y * s,
+          tRexBoxes[i].width * s,
+          tRexBoxes[i].height * s
+        );
         var adjObs = Dino.createAdjustedCollisionBox(
           obstacle.collisionBoxes[j],
           obstacleBox

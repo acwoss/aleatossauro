@@ -73,6 +73,41 @@ test("ímã puxa o pickup em direção ao dino", function () {
   assert.ok(pickup.xPos < 200);
 });
 
+test("ímã puxa o ovo para cima quando o dino está no ar", function () {
+  var kit = Dino.createPowerKit();
+  Dino.applyEffect(kit, "magnet");
+  var pickup = Dino.createPickup(50);
+  var groundY = pickup.yPos;
+  var tRex = { xPos: 50, yPos: 40, config: { width: 44, height: 47 } };
+  Dino.updatePickup(pickup, 16.67, 6, kit, tRex);
+  assert.ok(pickup.yPos < groundY);
+});
+
+test("ovo imantado no pulo encosta no dino em vez de sumir", function () {
+  var kit = Dino.createPowerKit();
+  Dino.applyEffect(kit, "magnet");
+  var pickup = Dino.createPickup(50);
+  var tRex = { xPos: 50, yPos: 40, config: { width: 44, height: 47 } };
+  var n;
+  for (n = 0; n < 40; n++) {
+    Dino.updatePickup(pickup, 16.67, 6, kit, tRex);
+    if (pickup.remove || Dino.pickupHitsTrex(pickup, tRex)) break;
+  }
+  assert.equal(pickup.remove, false);
+  assert.ok(Dino.pickupHitsTrex(pickup, tRex));
+});
+
+test("ímã forte não atravessa o dino no pulo", function () {
+  var kit = Dino.createPowerKit();
+  var i;
+  for (i = 0; i < 12; i++) Dino.applyEffect(kit, "magnet");
+  var pickup = Dino.createPickup(400);
+  var tRex = { xPos: 50, yPos: 40, config: { width: 44, height: 47 } };
+  Dino.updatePickup(pickup, 16.67, 6, kit, tRex);
+  assert.equal(pickup.remove, false);
+  assert.ok(Dino.pickupHitsTrex(pickup, tRex));
+});
+
 test("ovo fica no chão e não flutua", function () {
   var p = Dino.createPickup(600);
   var feetY = Dino.DEFAULT_HEIGHT - Dino.Config.bottomPad;
@@ -208,4 +243,20 @@ test("balão, asa e skate ficam no corpo e skates empilham", function () {
   assert.ok(gear.balloons[0].y >= 93 - 6);
   assert.ok(gear.wings[0].x >= 50);
   assert.equal(gear.skates.length, 3);
+});
+
+test("itens descem com o corpo quando o dino agacha", function () {
+  var kit = Dino.createPowerKit();
+  Dino.applyEffect(kit, "balloon");
+  Dino.applyEffect(kit, "wings");
+  Dino.applyEffect(kit, "hat");
+  Dino.applyEffect(kit, "blaster");
+  Dino.applyEffect(kit, "shield");
+  var stand = Dino.sideGear(kit, 50, 93, false);
+  var duck = Dino.sideGear(kit, 50, 93, true);
+  assert.ok(duck.wings[0].y > stand.wings[0].y);
+  assert.ok(duck.balloons[0].y > stand.balloons[0].y);
+  assert.ok(duck.hats[0].y > stand.hats[0].y);
+  assert.ok(duck.gun.y > stand.gun.y);
+  assert.ok(duck.shield.y > stand.shield.y);
 });

@@ -39,6 +39,7 @@
     this.pickups = [];
     this.bolts = [];
     this.blasterTimer = 0;
+    this.immuneMs = 0;
     this.tRex.powerKit = this.kit;
     this.hud.kit = this.kit;
     this.choice = null;
@@ -74,6 +75,7 @@
     this.resetKit();
     this.choice = null;
     this.hud.choice = null;
+    this.immuneMs = 0;
     this.status = "RUNNING";
   };
 
@@ -164,6 +166,7 @@
     this.hud.announce(effect.label);
     this.choice = null;
     this.hud.choice = null;
+    this.immuneMs = Dino.Config.choiceIframes;
     this.status = "RUNNING";
   };
 
@@ -171,13 +174,6 @@
     input = input || {};
     if (!this.choice) {
       this.status = "RUNNING";
-      return;
-    }
-    if (input.choiceNudge) {
-      this.choice.selected = (this.choice.selected + input.choiceNudge + 2) % 2;
-    }
-    if (input.chooseKey === 0 || input.chooseKey === 1) {
-      this.applyChoice(input.chooseKey);
       return;
     }
     if (input.pointer) {
@@ -191,10 +187,6 @@
         this.applyChoice(hit);
         return;
       }
-    }
-    if (input.jumpPressed) {
-      this.applyChoice(this.choice.selected);
-      return;
     }
     this.horizon.update(dt, 0, false);
     this.tRex.update(dt);
@@ -259,6 +251,10 @@
       return;
     }
 
+    if (this.immuneMs > 0) {
+      this.immuneMs = Math.max(0, this.immuneMs - dt);
+    }
+
     if (input.jumpPressed) {
       this.tRex.startJump(this.currentSpeed);
     }
@@ -307,31 +303,37 @@
       return !o.remove;
     });
 
-    for (i = 0; i < this.obstacles.length; i++) {
-      if (Dino.tryPopBalloon(this.kit, this.obstacles[i], this.tRex)) {
-        Dino.syncTrexFromKit(this.tRex, this.kit);
-      }
-    }
-
-    if (this.obstacles.length && Dino.checkForCollision(this.tRex, this.obstacles[0])) {
-      var front = this.obstacles[0];
-      if (front.typeConfig && front.typeConfig.type === "rock") {
-        if (Dino.resolveRockHit(this.kit) === "skate") {
-          this.currentSpeed = Math.max(Dino.Config.speed, this.currentSpeed - 0.7);
+    if (this.immuneMs <= 0) {
+      for (i = 0; i < this.obstacles.length; i++) {
+        if (Dino.tryPopBalloon(this.kit, this.obstacles[i], this.tRex)) {
+          Dino.syncTrexFromKit(this.tRex, this.kit);
         }
-        front.remove = true;
-        this.obstacles.shift();
-        Dino.syncTrexFromKit(this.tRex, this.kit);
-      } else {
+      }
+
+      for (i = 0; i < this.obstacles.length; i++) {
+        if (this.obstacles[i].remove) continue;
+        if (!Dino.checkForCollision(this.tRex, this.obstacles[i])) continue;
+        var front = this.obstacles[i];
+        if (front.typeConfig && front.typeConfig.type === "rock") {
+          if (Dino.resolveRockHit(this.kit) === "skate") {
+            this.currentSpeed = Math.max(Dino.Config.speed, this.currentSpeed - 0.7);
+            front.remove = true;
+            Dino.syncTrexFromKit(this.tRex, this.kit);
+          }
+          continue;
+        }
         var hit = Dino.resolveObstacleHit(this.kit, front);
         if (hit === "crash") {
           this.crash(now);
           return;
         }
         front.remove = true;
-        this.obstacles.shift();
         Dino.syncTrexFromKit(this.tRex, this.kit);
+        break;
       }
+      this.obstacles = this.obstacles.filter(function (o) {
+        return !o.remove;
+      });
     }
 
     var prevActual = Dino.getActualDistance(this.distanceRan);
@@ -394,6 +396,7 @@
         colors.bolt
       );
     }
+    this.tRex.immuneMs = this.immuneMs;
     this.tRex.draw(ctx, colors);
     this.hud.draw(
       ctx,

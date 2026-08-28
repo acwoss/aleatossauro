@@ -194,13 +194,22 @@
     return 1.7 + (kit.gravity || 0) * 0.55;
   };
 
-  Dino.sideGear = function (kit, xPos, yPos) {
+  Dino.sideGear = function (kit, xPos, yPos, ducking) {
     kit = kit || {};
-    var gear = { wings: [], balloons: [], skate: (kit.skate || 0) > 0, skates: [], shield: (kit.shields || 0) > 0 };
+    var bodyY = ducking ? 16 : 0;
+    var gear = {
+      wings: [],
+      balloons: [],
+      skate: (kit.skate || 0) > 0,
+      skates: [],
+      hats: [],
+      gun: null,
+      shield: null
+    };
     if (kit.wings > 0) {
       gear.wings.push({
-        x: xPos + 4,
-        y: yPos + 14,
+        x: xPos + (ducking ? 10 : 4),
+        y: yPos + 14 + bodyY,
         scale: 1 + 0.28 * Math.max(0, kit.wings - 1)
       });
     }
@@ -208,16 +217,34 @@
     var n = kit.balloon || 0;
     for (i = 0; i < n; i++) {
       gear.balloons.push({
-        x: xPos + 8,
-        y: yPos + 4 - i * 8,
+        x: xPos + (ducking ? 14 : 8),
+        y: yPos + 4 + bodyY - i * 8,
         color: i
       });
     }
     for (i = 0; i < (kit.skate || 0); i++) {
       gear.skates.push({
-        x: xPos + 8,
+        x: xPos + (ducking ? 12 : 8),
         y: yPos + 42 + i * 5
       });
+    }
+    for (i = 0; i < (kit.hats || 0); i++) {
+      gear.hats.push({
+        x: xPos + (ducking ? 38 : 18),
+        y: yPos + (ducking ? 10 : -8) - i * 5
+      });
+    }
+    if (kit.blaster > 0) {
+      gear.gun = {
+        x: xPos + (ducking ? 50 : 36),
+        y: yPos + (ducking ? 28 : 20)
+      };
+    }
+    if (kit.shields > 0) {
+      gear.shield = {
+        x: xPos + (ducking ? 12 : 6),
+        y: yPos + (ducking ? 20 : 8)
+      };
     }
     return gear;
   };
@@ -269,10 +296,11 @@
 
   Dino.blasterMuzzle = function (tRex) {
     var s = tRex.drawScale || 1;
+    var ducking = tRex.ducking;
     var fx = tRex.xPos;
     var fy = Dino.drawFeetY(tRex);
-    var gx = tRex.xPos + 54;
-    var gy = tRex.yPos + 23;
+    var gx = tRex.xPos + (ducking ? 68 : 54);
+    var gy = tRex.yPos + (ducking ? 31 : 23);
     return {
       x: fx + (gx - fx) * s,
       y: fy + (gy - fy) * s
@@ -367,9 +395,12 @@
     pickup.xPos -= Math.floor((speed * factor * Dino.FPS / 1000) * dt);
     if (kit && kit.magnet > 0 && tRex) {
       var tx = tRex.xPos + tRex.config.width / 2;
+      var ty = tRex.yPos + tRex.config.height / 2;
       var px = pickup.xPos + pickup.width / 2;
-      var pull = 0.12 * kit.magnet * dt;
-      pickup.xPos += (tx - px) * pull / 16;
+      var py = pickup.yPos + pickup.height / 2;
+      var pull = Math.min(1, (0.12 * kit.magnet * dt) / 16);
+      pickup.xPos += (tx - px) * pull;
+      pickup.yPos += (ty - py) * pull;
     }
     if (pickup.xPos + pickup.width < 0) pickup.remove = true;
   };

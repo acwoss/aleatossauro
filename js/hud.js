@@ -112,11 +112,14 @@
     this.toastTimer = 1600;
   };
 
+  Dino.CHOICE_TITLE = "Você encontrou um ovo e pode evoluir";
+  Dino.CHOICE_SUBTITLE = "Escolha a sua evolução para tentar sobreviver";
+
   Dino.choiceCardRects = function (logicalWidth) {
     var w = 132;
     var h = 58;
     var gap = 16;
-    var y = 26;
+    var y = 42;
     var total = w * 2 + gap;
     var x0 = Math.round((logicalWidth - total) / 2);
     return [
@@ -234,7 +237,6 @@
     var rects = Dino.choiceCardRects(logicalWidth);
     var i;
     var r;
-    var selected = this.choice.selected || 0;
     var opt;
     ctx.save();
     ctx.globalAlpha = 0.4;
@@ -243,24 +245,25 @@
     ctx.restore();
     ctx.save();
     ctx.fillStyle = palette.hud;
-    ctx.font = "bold 10px Courier New, monospace";
+    ctx.font = "bold 9px Courier New, monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("ESCOLHA UM EFEITO", logicalWidth / 2, 16);
+    ctx.fillText(Dino.CHOICE_TITLE, logicalWidth / 2, 14);
+    ctx.font = "8px Courier New, monospace";
+    ctx.fillText(Dino.CHOICE_SUBTITLE, logicalWidth / 2, 28);
     for (i = 0; i < rects.length; i++) {
       r = rects[i];
       opt = this.choice.options[i];
       ctx.fillStyle = palette.sand;
       ctx.fillRect(r.x, r.y, r.w, r.h);
-      ctx.strokeStyle = i === selected ? palette.crate : palette.hud;
-      ctx.lineWidth = i === selected ? 3 : 1;
+      ctx.strokeStyle = palette.hud;
+      ctx.lineWidth = 2;
       ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
       ctx.fillStyle = palette.hud;
       ctx.font = "bold 11px Courier New, monospace";
       ctx.fillText(opt ? opt.label : "", r.x + r.w / 2, r.y + 24);
       ctx.font = "8px Courier New, monospace";
-      ctx.fillStyle = i === selected ? palette.crate : palette.hud;
-      ctx.fillText(i + 1 + "  ·  toque ou " + (i + 1), r.x + r.w / 2, r.y + 42);
+      ctx.fillText("clique", r.x + r.w / 2, r.y + 42);
     }
     ctx.restore();
   };

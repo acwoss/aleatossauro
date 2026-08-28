@@ -49,6 +49,7 @@
     swipeDownMin: 30,
     pterodactylMinSpeed: 8.5,
     pickupScoreInterval: 200,
+    choiceIframes: 3000,
     blasterInterval: 700,
     blasterAmmo: 6,
     bg: "#9ed8f2",

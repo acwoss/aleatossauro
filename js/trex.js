@@ -202,9 +202,14 @@
     var kit = this.powerKit;
     var scale = this.drawScale || 1;
     var body = palette.dino;
-    var gear = typeof Dino.sideGear === "function" ? Dino.sideGear(kit, this.xPos, this.yPos) : { wings: [], balloons: [], skate: false, skates: [] };
+    var gear = typeof Dino.sideGear === "function" ? Dino.sideGear(kit, this.xPos, this.yPos, this.ducking) : { wings: [], balloons: [], skate: false, skates: [], hats: [] };
     ctx.save();
-    if (kit && kit.ghosts > 0) ctx.globalAlpha = 0.55;
+    var alpha = 1;
+    if (kit && kit.ghosts > 0) alpha = 0.55;
+    if ((this.immuneMs || 0) > 0 && Math.floor(this.immuneMs / 100) % 2 === 0) {
+      alpha *= 0.35;
+    }
+    ctx.globalAlpha = alpha;
     if (scale !== 1) {
       var feetY = typeof Dino.drawFeetY === "function" ? Dino.drawFeetY(this) : this.yPos + cfg().trexHeight;
       ctx.translate(this.xPos, feetY);
@@ -229,20 +234,18 @@
       );
     }
     Dino.drawRects(ctx, rects, this.xPos, this.yPos, body);
-    if (kit) {
-      if (kit.hats > 0) {
-        for (i = 0; i < kit.hats; i++) {
-          Dino.drawRects(ctx, Dino.Sprites.hat, this.xPos + 18, this.yPos - 8 - i * 5, palette.hat);
-        }
+    if (gear.hats) {
+      for (i = 0; i < gear.hats.length; i++) {
+        Dino.drawRects(ctx, Dino.Sprites.hat, gear.hats[i].x, gear.hats[i].y, palette.hat);
       }
-      if (kit.blaster > 0) {
-        Dino.drawRects(ctx, Dino.Sprites.gun, this.xPos + 36, this.yPos + 20, palette.gun);
-      }
-      if (kit.shields > 0) {
-        ctx.globalAlpha = 0.5;
-        Dino.drawRects(ctx, Dino.Sprites.shield, this.xPos + 6, this.yPos + 8, palette.shield);
-        ctx.globalAlpha = kit.ghosts > 0 ? 0.55 : 1;
-      }
+    }
+    if (gear.gun) {
+      Dino.drawRects(ctx, Dino.Sprites.gun, gear.gun.x, gear.gun.y, palette.gun);
+    }
+    if (gear.shield) {
+      ctx.globalAlpha = 0.5 * alpha;
+      Dino.drawRects(ctx, Dino.Sprites.shield, gear.shield.x, gear.shield.y, palette.shield);
+      ctx.globalAlpha = alpha;
     }
     var boards = gear.skates && gear.skates.length ? gear.skates : gear.skate ? [{ x: this.xPos + 8, y: this.yPos + 42 }] : [];
     for (i = 0; i < boards.length; i++) {

@@ -34,3 +34,10 @@ test("hitChoiceCard acerta esquerda, direita ou nenhum", function () {
   assert.equal(Dino.hitChoiceCard(rects[1].x + 4, rects[1].y + 4, 600), 1);
   assert.equal(Dino.hitChoiceCard(0, 0, 600), -1);
 });
+
+test("título da escolha fala em ovo e evolução, não efeito", function () {
+  assert.ok(Dino.CHOICE_TITLE.indexOf("ovo") !== -1);
+  assert.ok(Dino.CHOICE_TITLE.toLowerCase().indexOf("efeito") === -1);
+  assert.ok(Dino.CHOICE_SUBTITLE.toLowerCase().indexOf("evolução") !== -1);
+  assert.ok(Dino.CHOICE_SUBTITLE.toLowerCase().indexOf("efeito") === -1);
+});
