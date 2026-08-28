@@ -240,7 +240,11 @@
         palette.balloon[gear.balloons[i].color % palette.balloon.length]
       );
     }
-    Dino.drawRects(ctx, rects, this.xPos, this.yPos, body);
+    if (this.skin && typeof Dino.drawSkinnedRects === "function") {
+      Dino.drawSkinnedRects(ctx, rects, this.xPos, this.yPos, this.skin, body);
+    } else {
+      Dino.drawRects(ctx, rects, this.xPos, this.yPos, body);
+    }
     if (gear.hats) {
       for (i = 0; i < gear.hats.length; i++) {
         Dino.drawRects(ctx, Dino.Sprites.hat, gear.hats[i].x, gear.hats[i].y, palette.hat);

@@ -57,7 +57,8 @@
     baseHp: 1,
     bg: "#9ed8f2",
     fg: "#2d6a3f",
-    storageKey: "aleatossauro-hi"
+    storageKey: "aleatossauro-hi",
+    skinKey: "aleatossauro-skin"
   };
 
   var DAY = {

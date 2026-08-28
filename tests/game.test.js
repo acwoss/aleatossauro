@@ -5,6 +5,7 @@ require("../js/layout.js");
 require("../js/input.js");
 require("../js/collision.js");
 require("../js/sprites.js");
+require("../js/skin.js");
 require("../js/trex.js");
 require("../js/horizon.js");
 require("../js/obstacles.js");
@@ -12,6 +13,44 @@ require("../js/powerups.js");
 require("../js/boss.js");
 require("../js/hud.js");
 var Dino = require("../js/game.js");
+
+test("o jogo começa no estúdio de pintura do dino", function () {
+  var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600 });
+  assert.equal(g.status, "PAINTING");
+  assert.ok(g.skin && g.skin.cells["20,2"]);
+  g.update(16, 0, { jumpPressed: true, duck: false });
+  assert.equal(g.status, "RUNNING");
+});
+
+test("pintar um quadradinho não começa a corrida", function () {
+  var g = Dino.createGameState({ innerWidth: 1920, innerHeight: 1080 });
+  var studio = Dino.paintStudioLayout(g.layout);
+  g.paintColor = "#e74c3c";
+  g.update(16, 0, {
+    jumpPressed: true,
+    duck: false,
+    pointer: {
+      clientX: (studio.x0 + 20 * studio.cell + studio.cell / 2) * g.layout.scale,
+      clientY: g.layout.hudOffsetY + (studio.y0 + 2 * studio.cell + studio.cell / 2) * g.layout.scale
+    }
+  });
+  assert.equal(g.status, "PAINTING");
+  assert.equal(g.skin.cells["20,2"], "#e74c3c");
+});
+
+test("botão correr sai da pintura", function () {
+  var g = Dino.createGameState({ innerWidth: 1920, innerHeight: 1080 });
+  var studio = Dino.paintStudioLayout(g.layout);
+  g.update(16, 0, {
+    jumpPressed: false,
+    duck: false,
+    pointer: {
+      clientX: (studio.start.x + 4) * g.layout.scale,
+      clientY: g.layout.hudOffsetY + (studio.start.y + 4) * g.layout.scale
+    }
+  });
+  assert.equal(g.status, "RUNNING");
+});
 
 test("restart zera score e velocidade e mantém HI", function () {
   var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600 });
@@ -259,6 +298,7 @@ test("score e atributos são desenhados no topo da página", function () {
     restore: function () {},
     translate: function () {},
     scale: function () {},
+    rotate: function () {},
     fillRect: function () {},
     strokeRect: function () {},
     fillText: function () {},

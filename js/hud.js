@@ -254,6 +254,13 @@
     };
   };
 
+  Dino.clientToHudLogical = function (clientX, clientY, layout) {
+    return {
+      x: clientX / layout.scale,
+      y: (clientY - (layout.hudOffsetY || 8)) / layout.scale
+    };
+  };
+
   Hud.prototype.drawDigit = function (ctx, rects, x, y, color) {
     Dino.drawRects(ctx, rects, x, y, color);
   };

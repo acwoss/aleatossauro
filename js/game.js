@@ -18,7 +18,7 @@
       this.layout.logicalHeight -
       Dino.Config.trexHeight -
       Dino.Config.bottomPad;
-    this.status = "WAITING";
+    this.status = "PAINTING";
     this.currentSpeed = Dino.Config.speed;
     this.distanceRan = 0;
     this.runningTime = 0;
@@ -48,6 +48,14 @@
     this.hud.choice = null;
     this.fight = null;
     this.hud.boss = null;
+    this.skin =
+      typeof Dino.loadSkin === "function"
+        ? Dino.loadSkin()
+        : typeof Dino.createSkin === "function"
+          ? Dino.createSkin("#2d6a3f")
+          : null;
+    this.paintColor = (this.skin && this.skin.fallback) || "#2d6a3f";
+    this.tRex.skin = this.skin;
     Dino.syncTrexFromKit(this.tRex, this.kit);
   }
 
@@ -78,6 +86,7 @@
     this.tRex.reset();
     this.tRex.xPos = Dino.Config.startXPos;
     this.tRex.facing = 1;
+    this.tRex.skin = this.skin;
     this.hud.reset();
     this.resetKit();
     this.choice = null;
@@ -412,8 +421,61 @@
     });
   };
 
+  Game.prototype.finishPainting = function () {
+    if (typeof Dino.saveSkin === "function") Dino.saveSkin(this.skin);
+    this.tRex.skin = this.skin;
+    this.status = "RUNNING";
+    this.runningTime = 0;
+    this.tRex.startJump(this.currentSpeed);
+  };
+
+  Game.prototype.handlePainting = function (dt, input) {
+    var self = this;
+    var studio = typeof Dino.paintStudioLayout === "function"
+      ? Dino.paintStudioLayout(this.layout)
+      : null;
+    var used = false;
+    var hit;
+    var local;
+    input = input || {};
+    function apply(clientX, clientY, isDrag) {
+      if (!studio || typeof Dino.clientToHudLogical !== "function") return;
+      local = Dino.clientToHudLogical(clientX, clientY, self.layout);
+      hit = Dino.hitPaintTarget(local, studio);
+      if (!hit) return;
+      if (hit.type === "cell") {
+        Dino.paintSkin(self.skin, hit.x, hit.y, self.paintColor);
+        used = true;
+      } else if (hit.type === "swatch" && !isDrag) {
+        self.paintColor = hit.color;
+        used = true;
+      } else if (hit.type === "reset" && !isDrag) {
+        self.skin = Dino.createSkin(self.skin.fallback || "#2d6a3f");
+        self.tRex.skin = self.skin;
+        used = true;
+      } else if (hit.type === "start" && !isDrag) {
+        used = true;
+        self.finishPainting();
+      }
+    }
+    if (input.pointer) apply(input.pointer.clientX, input.pointer.clientY, false);
+    if (this.status === "PAINTING" && input.touchClientX != null) {
+      apply(input.touchClientX, input.touchClientY, true);
+    }
+    if (this.status === "PAINTING" && input.jumpPressed && !used) {
+      this.finishPainting();
+      return;
+    }
+    this.horizon.update(dt, 0, false);
+    this.tRex.update(dt);
+  };
+
   Game.prototype.update = function (dt, now, input) {
     input = input || { jumpPressed: false, duck: false };
+    if (this.status === "PAINTING") {
+      this.handlePainting(dt, input);
+      return;
+    }
     if (this.status === "WAITING") {
       if (input.jumpPressed) {
         this.status = "RUNNING";
@@ -632,6 +694,15 @@
       (this.layout.hudOffsetY || 8) * dpr
     );
     this.hud.drawChrome(ctx, this.layout.logicalWidth, colors);
+    if (this.status === "PAINTING" && typeof Dino.drawPaintStudio === "function") {
+      Dino.drawPaintStudio(
+        ctx,
+        Dino.paintStudioLayout(this.layout),
+        this.skin,
+        this.paintColor,
+        colors
+      );
+    }
   };
 
   Game.prototype.resize = function (innerWidth, innerHeight) {
