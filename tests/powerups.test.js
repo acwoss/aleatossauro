@@ -48,24 +48,30 @@ test("intervalo do ovo cresce com o score e cai com inteligência", function () 
   assert.ok(Dino.pickupInterval(scale, kit) < 120, "INT 4 no meio da corrida não pode explodir o intervalo");
 });
 
-test("toda evolução tem um efeito oculto distinto", function () {
-  Dino.EFFECTS.forEach(function (e) {
-    assert.ok(e.hidden, "falta oculto " + e.id);
-    assert.notEqual(e.hidden, e.id);
-    assert.ok(Dino.effectById(e.hidden), e.id + " oculto inválido " + e.hidden);
-  });
+test("efeito oculto é aleatório e só com 1% de sorte", function () {
+  var miss = Dino.createPowerKit();
+  var hit = Dino.createPowerKit();
+  var applied;
+  Dino.applyEvolution(miss, "sword", function () { return 0.5; });
+  assert.equal(Dino.effectCount(miss, "sword"), 1);
+  assert.equal(miss.owned.length, 1);
+  applied = Dino.applyEvolution(hit, "sword", function () { return 0; });
+  assert.equal(applied[0], "sword");
+  assert.equal(applied.length, 2);
+  assert.notEqual(applied[1], "sword");
+  assert.ok(Dino.effectCount(hit, applied[1]) >= 1);
+  assert.equal(Dino.applyEvolution(Dino.createPowerKit(), "sword", function () { return 0.01; }).length, 1);
 });
 
-test("escolher evolução aplica o oculto; applyEffect não", function () {
-  var sword = Dino.effectById("sword");
+test("itens com VEL aumentam a corrida, não só o card", function () {
   var kit = Dino.createPowerKit();
-  Dino.applyEffect(kit, "sword");
-  assert.equal(Dino.effectCount(kit, "sword"), 1);
-  assert.equal(Dino.effectCount(kit, sword.hidden), 0);
-  var evolved = Dino.createPowerKit();
-  Dino.applyEvolution(evolved, "sword");
-  assert.equal(Dino.effectCount(evolved, "sword"), 1);
-  assert.ok(Dino.effectCount(evolved, sword.hidden) >= 1);
+  var base = Dino.maxRunSpeed(kit);
+  Dino.applyEffect(kit, "mohawk");
+  Dino.applyEffect(kit, "socks");
+  Dino.applyEffect(kit, "flag");
+  assert.equal(Dino.kitSpd(kit), 3);
+  assert.ok(Dino.maxRunSpeed(kit) > base);
+  assert.ok(Dino.runSpeedBonus(kit) > 0);
 });
 
 test("applyEffect acumula pulo extra, café e escudo", function () {

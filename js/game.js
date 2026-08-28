@@ -184,20 +184,25 @@
     this.status = "CHOOSING";
   };
 
-  Game.prototype.applyChoice = function (index) {
+  Game.prototype.applyChoice = function (index, rng) {
     if (!this.choice || !this.choice.options || !this.choice.options[index]) return;
     var effect = this.choice.options[index];
+    var spdBefore = typeof Dino.kitSpd === "function" ? Dino.kitSpd(this.kit) : 0;
     var applied =
       typeof Dino.applyEvolution === "function"
-        ? Dino.applyEvolution(this.kit, effect.id)
+        ? Dino.applyEvolution(this.kit, effect.id, rng)
         : (Dino.applyEffect(this.kit, effect.id), [effect.id]);
-    var i;
-    var id;
     Dino.syncTrexFromKit(this.tRex, this.kit);
-    for (i = 0; i < applied.length; i++) {
-      id = applied[i];
-      if (id === "skate") this.currentSpeed += 0.7;
-      if (id === "boots") this.currentSpeed += 0.9;
+    if (typeof Dino.runSpeedBonus === "function") {
+      this.currentSpeed += Dino.kitSpd(this.kit) * 0.7 - spdBefore * 0.7;
+    } else {
+      var i;
+      var id;
+      for (i = 0; i < applied.length; i++) {
+        id = applied[i];
+        if (id === "skate") this.currentSpeed += 0.7;
+        if (id === "boots") this.currentSpeed += 0.9;
+      }
     }
     this.hud.announce(effect.label);
     this.choice = null;
@@ -646,14 +651,19 @@
     }
 
     var prevActual = Dino.getActualDistance(this.distanceRan);
-    var maxSpeed = Dino.Config.maxSpeed + this.kit.skate * 1.4 + (this.kit.boots || 0) * 1.2;
+    var maxSpeed =
+      typeof Dino.maxRunSpeed === "function"
+        ? Dino.maxRunSpeed(this.kit)
+        : Dino.Config.maxSpeed + this.kit.skate * 1.4 + (this.kit.boots || 0) * 1.2;
     this.distanceRan +=
       this.currentSpeed *
       Dino.scoreMultiplier(this.kit) *
       dt /
       (1000 / Dino.FPS);
     if (this.currentSpeed < maxSpeed) {
-      this.currentSpeed += Dino.Config.acceleration * (1 + this.kit.skate * 0.4);
+      this.currentSpeed +=
+        Dino.Config.acceleration *
+        (1 + (typeof Dino.kitSpd === "function" ? Dino.kitSpd(this.kit) : this.kit.skate) * 0.4);
     }
     if (Dino.crossedBossThreshold(prevActual, Dino.getActualDistance(this.distanceRan))) {
       this.startBoss();

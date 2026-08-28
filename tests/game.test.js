@@ -167,14 +167,14 @@ test("escolher evolução deixa o dino imune proporcional à inteligência", fun
   g.status = "CHOOSING";
   g.choice = { options: [Dino.effectById("doubleJump"), Dino.effectById("heart")], selected: 0 };
   g.hud.choice = g.choice;
-  g.applyChoice(0);
+  g.applyChoice(0, function () { return 0.5; });
   assert.equal(g.status, "RUNNING");
   assert.equal(g.immuneMs, Dino.evolutionImmuneMs(g.kit));
-  assert.ok(Dino.effectCount(g.kit, Dino.effectById("doubleJump").hidden) >= 1);
+  assert.equal(g.kit.owned.length, 1);
   g.status = "CHOOSING";
   g.choice = { options: [Dino.effectById("coffee"), Dino.effectById("sword")], selected: 0 };
   g.hud.choice = g.choice;
-  g.applyChoice(0);
+  g.applyChoice(0, function () { return 0.5; });
   assert.equal(g.immuneMs, Dino.evolutionImmuneMs(g.kit));
   assert.ok(Dino.rpgStats(g.kit).int >= 4);
 });
@@ -184,8 +184,18 @@ test("estrela soma imunidade extra depois da evolução", function () {
   g.status = "CHOOSING";
   g.choice = { options: [Dino.effectById("star"), Dino.effectById("heart")], selected: 0 };
   g.hud.choice = g.choice;
-  g.applyChoice(0);
+  g.applyChoice(0, function () { return 0.5; });
   assert.equal(g.immuneMs, Dino.evolutionImmuneMs(g.kit) + 1500);
+});
+
+test("moicano aumenta a velocidade da corrida", function () {
+  var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
+  var before = g.currentSpeed;
+  g.status = "CHOOSING";
+  g.choice = { options: [Dino.effectById("mohawk"), Dino.effectById("heart")], selected: 0 };
+  g.hud.choice = g.choice;
+  g.applyChoice(0, function () { return 0.5; });
+  assert.ok(g.currentSpeed > before);
 });
 
 test("imune atravessa cacto sem crash e sem gastar escudo", function () {

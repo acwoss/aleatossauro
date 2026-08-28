@@ -52,6 +52,7 @@
     pickupScoreGrowth: 1.5,
     pickupScoreScale: 2000,
     pickupScoreMin: 40,
+    hiddenLuck: 0.01,
     bossScoreInterval: 5000,
     choiceIframes: 3000,
     hurtFlashMs: 480,

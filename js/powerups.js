@@ -86,89 +86,6 @@
 
   Dino.EFFECTS = Dino.EFFECTS.concat(Dino.COSMETICS);
 
-  Dino.HIDDEN_EFFECTS = {
-    doubleJump: "cape",
-    skate: "socks",
-    hat: "cowboy",
-    blaster: "visor",
-    shield: "poncho",
-    magnet: "antenna",
-    mini: "bubble",
-    titan: "ramhorns",
-    wings: "plume",
-    coffee: "phones",
-    spring: "prop",
-    clock: "monocle",
-    ghost: "halo",
-    balloon: "lei",
-    gravity: "saddle",
-    sword: "belt",
-    spear: "tailspike",
-    heart: "blossom",
-    boots: "sandals",
-    ice: "snorkel",
-    chili: "honey",
-    crystal: "wizard",
-    cloak: "muffler",
-    quake: "spikes",
-    horn: "bone",
-    star: "halo",
-    potion: "shroom",
-    scarf: "muffler",
-    shades: "patch",
-    mohawk: "bandana",
-    bowtie: "beads",
-    pack: "radio",
-    bandana: "mohawk",
-    hoop: "blossom",
-    stache: "bone",
-    cape: "flag",
-    bell: "ribbon",
-    blossom: "lei",
-    crown: "wizard",
-    visor: "goggles",
-    poncho: "scarf",
-    spikes: "tailspike",
-    goggles: "shades",
-    lei: "beads",
-    ribbon: "vine",
-    antenna: "radio",
-    jetpack: "prop",
-    cowboy: "beanie",
-    beanie: "crown",
-    phones: "radio",
-    beads: "hoop",
-    belt: "medal",
-    socks: "sandals",
-    sandals: "socks",
-    tailspike: "spikes",
-    plume: "leaf",
-    splatter: "honey",
-    patch: "shades",
-    wizard: "crown",
-    halo: "leaf",
-    ramhorns: "cowboy",
-    snorkel: "goggles",
-    monocle: "wizard",
-    medal: "belt",
-    radio: "antenna",
-    lantern: "halo",
-    flag: "cape",
-    vine: "ribbon",
-    shroom: "leaf",
-    honey: "splatter",
-    boltcap: "jetpack",
-    bubble: "shroom",
-    leaf: "plume",
-    bone: "stache",
-    muffler: "scarf",
-    prop: "jetpack",
-    saddle: "pack"
-  };
-  Dino.EFFECTS.forEach(function (e) {
-    if (Dino.HIDDEN_EFFECTS[e.id]) e.hidden = Dino.HIDDEN_EFFECTS[e.id];
-  });
-
   Dino.createPowerKit = function () {
     return {
       extraJumps: 0,
@@ -231,13 +148,35 @@
     return prevActual < next && actual >= next;
   };
 
-  Dino.applyEvolution = function (kit, id) {
-    var effect = Dino.effectById(id);
+  Dino.rollHiddenEffect = function (excludeId, rng) {
+    rng = rng || Math.random;
+    var pool = [];
+    var i;
+    var idx;
+    if (!Dino.EFFECTS) return null;
+    for (i = 0; i < Dino.EFFECTS.length; i++) {
+      if (Dino.EFFECTS[i].id !== excludeId) pool.push(Dino.EFFECTS[i]);
+    }
+    if (!pool.length) return null;
+    idx = Math.floor(rng() * pool.length);
+    if (idx < 0) idx = 0;
+    if (idx >= pool.length) idx = pool.length - 1;
+    return pool[idx];
+  };
+
+  Dino.applyEvolution = function (kit, id, rng) {
     var applied = [id];
+    var luck;
+    var hidden;
+    rng = rng || Math.random;
     Dino.applyEffect(kit, id);
-    if (effect && effect.hidden && effect.hidden !== id) {
-      Dino.applyEffect(kit, effect.hidden);
-      applied.push(effect.hidden);
+    luck = rng();
+    if (luck < ((Dino.Config && Dino.Config.hiddenLuck) || 0.01)) {
+      hidden = Dino.rollHiddenEffect(id, rng);
+      if (hidden && hidden.id) {
+        Dino.applyEffect(kit, hidden.id);
+        applied.push(hidden.id);
+      }
     }
     return applied;
   };
@@ -439,7 +378,7 @@
     var spd =
       opts.speed != null
         ? Math.round(opts.speed)
-        : Math.round(6 + (kit.skate || 0) * 1.4 + (kit.boots || 0) * 1.2);
+        : Math.round(6 + Dino.kitSpd(kit));
     var hpMax = kit.hpMax != null ? kit.hpMax : baseHp + Dino.sumEffectStat(kit, "hp");
     var hp = kit.hp != null ? kit.hp : hpMax;
     return {
@@ -477,6 +416,19 @@
       }
     }
     return total;
+  };
+
+  Dino.kitSpd = function (kit) {
+    return Dino.sumEffectStat(kit, "spd");
+  };
+
+  Dino.runSpeedBonus = function (kit) {
+    return Dino.kitSpd(kit) * 0.7;
+  };
+
+  Dino.maxRunSpeed = function (kit) {
+    var cap = (Dino.Config && Dino.Config.maxSpeed) || 13;
+    return cap + Dino.kitSpd(kit) * 1.2;
   };
 
   Dino.refreshKitHp = function (kit) {
