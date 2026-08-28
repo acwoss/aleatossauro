@@ -13,8 +13,8 @@
     return Math.max(1, Math.floor((actualScore || 0) / 1000));
   };
 
-  Dino.bossMaxHp = function (difficulty) {
-    return 2 + (difficulty || 1);
+  Dino.bossMaxHp = function (actualScore) {
+    return Math.max(1, Math.floor(actualScore || 0));
   };
 
   Dino.bossScale = function (difficulty, jitter) {
@@ -63,7 +63,7 @@
     rng = rng || Math.random;
     var difficulty = Dino.bossDifficulty(actualScore);
     var scale = Dino.bossScale(difficulty, rng() * 0.18);
-    var maxHp = Dino.bossMaxHp(difficulty);
+    var maxHp = Dino.bossMaxHp(actualScore);
     var w = Dino.Config.trexWidth * scale;
     var h = Dino.Config.trexHeight * scale;
     var feetY = Dino.DEFAULT_HEIGHT - Dino.Config.bottomPad;

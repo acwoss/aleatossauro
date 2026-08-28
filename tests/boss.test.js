@@ -13,11 +13,18 @@ test("cruzar 5000 pontos dispara o boss", function () {
   assert.equal(Dino.crossedBossThreshold(0, 200), false);
 });
 
-test("dificuldade e vida do boss sobem com pontos/1000", function () {
+test("dificuldade do boss sobe com pontos/1000", function () {
   assert.equal(Dino.bossDifficulty(5000), 5);
   assert.equal(Dino.bossDifficulty(12000), 12);
-  assert.ok(Dino.bossMaxHp(12) > Dino.bossMaxHp(5));
   assert.ok(Dino.bossChargeSpeed(12) > Dino.bossChargeSpeed(5));
+});
+
+test("vida do boss é igual à pontuação atual", function () {
+  assert.equal(Dino.bossMaxHp(5000), 5000);
+  assert.equal(Dino.bossMaxHp(12000), 12000);
+  var fight = Dino.createBossFight(600, 5000, function () { return 0; });
+  assert.equal(fight.boss.hp, 5000);
+  assert.equal(fight.boss.maxHp, 5000);
 });
 
 test("boss sorteado é maior e nasce à direita", function () {
