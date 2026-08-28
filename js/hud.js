@@ -55,6 +55,7 @@
     this.toastTimer = 0;
     this.kit = null;
     this.choice = null;
+    this.boss = null;
   }
 
   Hud.prototype.setHighScore = function (distanceRan) {
@@ -70,6 +71,7 @@
     this.toast = "";
     this.toastTimer = 0;
     this.choice = null;
+    this.boss = null;
   };
 
   Hud.prototype.update = function (dt, distanceRan) {
@@ -202,7 +204,7 @@
         ink
       );
     }
-    if (this.toast && !this.choice) {
+    if (this.toast && !this.choice && !this.boss) {
       ctx.save();
       ctx.fillStyle = palette.crate;
       ctx.font = "bold 11px Courier New, monospace";
@@ -211,7 +213,7 @@
       ctx.fillText(this.toast, logicalWidth / 2, 28);
       ctx.restore();
     }
-    if (this.kit && this.kit.owned.length) {
+    if (this.kit && this.kit.owned.length && !this.boss) {
       ctx.save();
       ctx.fillStyle = ink;
       ctx.font = "8px Courier New, monospace";
@@ -228,9 +230,36 @@
       ctx.fillText(labels.join("  ·  "), 8, 22);
       ctx.restore();
     }
+    if (this.boss) {
+      this.drawBoss(ctx, logicalWidth, palette);
+    }
     if (this.choice && this.choice.options && this.choice.options.length) {
       this.drawChoice(ctx, logicalWidth, palette);
     }
+  };
+
+  Hud.prototype.drawBoss = function (ctx, logicalWidth, palette) {
+    var boss = this.boss;
+    var barW = 160;
+    var x = Math.round((logicalWidth - barW) / 2);
+    var ratio = boss.maxHp ? boss.hp / boss.maxHp : 0;
+    ctx.save();
+    ctx.fillStyle = palette.hud;
+    ctx.font = "bold 9px Courier New, monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("BOSS  " + (boss.name || ""), logicalWidth / 2, 14);
+    ctx.fillStyle = palette.sand;
+    ctx.fillRect(x, 22, barW, 7);
+    ctx.fillStyle = palette.crate;
+    ctx.fillRect(x, 22, Math.max(0, Math.round(barW * ratio)), 7);
+    ctx.strokeStyle = palette.hud;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, 22.5, barW - 1, 6);
+    ctx.fillStyle = palette.hud;
+    ctx.font = "8px Courier New, monospace";
+    ctx.fillText("pulo na cabeça · setas para mover", logicalWidth / 2, 36);
+    ctx.restore();
   };
 
   Hud.prototype.drawChoice = function (ctx, logicalWidth, palette) {

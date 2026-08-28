@@ -77,3 +77,13 @@ test("tecla 1 e clique informam escolha de card", function () {
   assert.equal(b.pointer.clientX, 120);
   assert.equal(b.pointer.clientY, 80);
 });
+
+test("seta esquerda fica pressionada até o keyup", function () {
+  var el = fakeEl();
+  var input = Dino.createInput();
+  input.attach(el);
+  el.fire("keydown", { code: "ArrowLeft", repeat: false, preventDefault: function () {} });
+  assert.equal(input.consume().left, true);
+  el.fire("keyup", { code: "ArrowLeft", preventDefault: function () {} });
+  assert.equal(input.consume().left, false);
+});

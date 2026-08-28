@@ -44,6 +44,8 @@
     this.hud.kit = this.kit;
     this.choice = null;
     this.hud.choice = null;
+    this.fight = null;
+    this.hud.boss = null;
     Dino.syncTrexFromKit(this.tRex, this.kit);
   }
 
@@ -71,10 +73,13 @@
     this.horizon.setWidth(this.layout.logicalWidth);
     this.horizon.setViewHeight(this.layout.viewHeight);
     this.tRex.reset();
+    this.tRex.xPos = Dino.Config.startXPos;
     this.hud.reset();
     this.resetKit();
     this.choice = null;
     this.hud.choice = null;
+    this.fight = null;
+    this.hud.boss = null;
     this.immuneMs = 0;
     this.status = "RUNNING";
   };
@@ -192,6 +197,132 @@
     this.tRex.update(dt);
   };
 
+  Game.prototype.startBoss = function () {
+    var actual = Dino.getActualDistance(this.distanceRan);
+    this.obstacles = [];
+    this.pickups = [];
+    this.bolts = [];
+    this.tRex.xPos = 32;
+    this.tRex.yPos = this.tRex.groundYPos;
+    this.tRex.jumping = false;
+    this.tRex.jumpVelocity = 0;
+    this.tRex.ducking = false;
+    this.tRex.update(0, Dino.TrexStatus.RUNNING);
+    this.fight = Dino.createBossFight(this.layout.logicalWidth, actual);
+    this.hud.boss = this.fight.boss;
+    this.status = "BOSS";
+  };
+
+  Game.prototype.endBoss = function () {
+    this.fight = null;
+    this.hud.boss = null;
+    this.tRex.xPos = Dino.Config.startXPos;
+    this.tRex.yPos = this.tRex.groundYPos;
+    this.immuneMs = Dino.Config.choiceIframes;
+    this.hud.announce("BOSS DERROTADO");
+    this.status = "RUNNING";
+  };
+
+  Game.prototype.harmFromBoss = function (now) {
+    if (this.immuneMs > 0) return false;
+    var hit = Dino.resolveObstacleHit(this.kit, { typeConfig: { type: "cactusLarge" } });
+    Dino.syncTrexFromKit(this.tRex, this.kit);
+    if (hit === "crash") {
+      this.crash(now);
+      return true;
+    }
+    this.immuneMs = 700;
+    return false;
+  };
+
+  Game.prototype.handleBoss = function (dt, input, now) {
+    input = input || {};
+    if (!this.fight || !this.fight.boss) {
+      this.status = "RUNNING";
+      return;
+    }
+    if (this.immuneMs > 0) {
+      this.immuneMs = Math.max(0, this.immuneMs - dt);
+    }
+    var left = !!input.left;
+    var right = !!input.right;
+    if (input.touchClientX != null && typeof Dino.clientToLogical === "function") {
+      var local = Dino.clientToLogical(
+        input.touchClientX,
+        input.touchClientY || 0,
+        this.layout
+      );
+      if (local.x + 6 < this.tRex.xPos) left = true;
+      else if (local.x > this.tRex.xPos + 38) right = true;
+    }
+    Dino.moveBossPlayer(
+      this.tRex,
+      { left: left, right: right },
+      dt,
+      this.layout.logicalWidth
+    );
+    if (input.jumpPressed) {
+      this.tRex.startJump(Dino.Config.speed);
+    }
+    if (input.duck && this.tRex.jumping) {
+      this.tRex.setSpeedDrop();
+    } else if (input.duck && !this.tRex.jumping) {
+      this.tRex.setDuck(true);
+    } else if (!input.duck) {
+      this.tRex.setDuck(false);
+    }
+    if (this.tRex.jumping) {
+      this.tRex.updateJump(dt);
+    }
+    this.tRex.update(dt);
+    this.updateBlaster(dt);
+    var i;
+    var bolt;
+    for (i = 0; i < this.bolts.length; i++) {
+      bolt = this.bolts[i];
+      if (Dino.boltHitsBoss(bolt, this.fight.boss)) {
+        bolt.remove = true;
+        Dino.hurtBoss(this.fight.boss, 1);
+      }
+    }
+    this.bolts = this.bolts.filter(function (b) {
+      return !b.remove && b.xPos < 4000;
+    });
+    var phase = Dino.updateBoss(
+      this.fight.boss,
+      dt,
+      this.tRex,
+      this.layout.logicalWidth,
+      this.fight
+    );
+    this.fight.shots = Dino.updateBossShots(this.fight.shots || [], dt);
+    if (Dino.bossStompHit(this.tRex, this.fight.boss)) {
+      Dino.hurtBoss(this.fight.boss, 1);
+      this.tRex.update(0, Dino.TrexStatus.JUMPING);
+      this.tRex.jumpVelocity = -8;
+      this.tRex.jumping = true;
+      this.tRex.reachedMinHeight = false;
+      this.immuneMs = Math.max(this.immuneMs, 280);
+    } else if (this.immuneMs <= 0 && Dino.bossBodyHit(this.tRex, this.fight.boss)) {
+      if (this.harmFromBoss(now)) return;
+    }
+    for (i = 0; i < this.fight.shots.length; i++) {
+      if (this.immuneMs <= 0 && Dino.shotHitsPlayer(this.fight.shots[i], this.tRex)) {
+        this.fight.shots[i].remove = true;
+        if (this.harmFromBoss(now)) return;
+      }
+    }
+    this.fight.shots = (this.fight.shots || []).filter(function (s) {
+      return !s.remove;
+    });
+    this.horizon.update(dt, 0, false);
+    this.hud.boss = this.fight.boss;
+    if (phase === "won" || this.fight.boss.hp <= 0) {
+      this.fight.winMs = (this.fight.winMs || 0) + dt;
+      if (this.fight.winMs >= 480) this.endBoss();
+    }
+  };
+
   Game.prototype.updateBlaster = function (dt) {
     var i;
     var j;
@@ -248,6 +379,11 @@
 
     if (this.status === "CHOOSING") {
       this.handleChoosing(dt, input);
+      return;
+    }
+
+    if (this.status === "BOSS") {
+      this.handleBoss(dt, input, now);
       return;
     }
 
@@ -346,6 +482,11 @@
     if (this.currentSpeed < maxSpeed) {
       this.currentSpeed += Dino.Config.acceleration * (1 + this.kit.skate * 0.4);
     }
+    if (Dino.crossedBossThreshold(prevActual, Dino.getActualDistance(this.distanceRan))) {
+      this.startBoss();
+      this.hud.update(dt, this.distanceRan);
+      return;
+    }
     if (Dino.crossedPickupThreshold(prevActual, Dino.getActualDistance(this.distanceRan))) {
       this.pickups.push(Dino.createPickup(this.layout.logicalWidth));
     }
@@ -395,6 +536,20 @@
         Math.round(this.bolts[i].yPos),
         colors.bolt
       );
+    }
+    if (this.fight && this.fight.shots) {
+      for (i = 0; i < this.fight.shots.length; i++) {
+        Dino.drawRects(
+          ctx,
+          Dino.Sprites.bolt,
+          Math.round(this.fight.shots[i].xPos),
+          Math.round(this.fight.shots[i].yPos),
+          colors.crate
+        );
+      }
+    }
+    if (this.fight && this.fight.boss) {
+      Dino.drawBoss(ctx, this.fight.boss, colors);
     }
     this.tRex.immuneMs = this.immuneMs;
     this.tRex.draw(ctx, colors);

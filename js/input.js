@@ -14,6 +14,9 @@
     var chooseKey = null;
     var choiceNudge = 0;
     var pointer = null;
+    var leftKey = false;
+    var rightKey = false;
+    var touchHold = null;
 
     function prevent(ev) {
       if (ev && ev.preventDefault) ev.preventDefault();
@@ -34,28 +37,38 @@
         prevent(ev);
         return;
       }
-      if (ev.code === "ArrowLeft") {
+      if (ev.code === "ArrowLeft" || ev.code === "KeyA") {
+        leftKey = true;
         choiceNudge = -1;
         prevent(ev);
         return;
       }
-      if (ev.code === "ArrowRight") {
+      if (ev.code === "ArrowRight" || ev.code === "KeyD") {
+        rightKey = true;
         choiceNudge = 1;
         prevent(ev);
         return;
       }
-      if (ev.code === "Space" || ev.code === "ArrowUp" || ev.code === "Enter") {
+      if (ev.code === "Space" || ev.code === "ArrowUp" || ev.code === "Enter" || ev.code === "KeyW") {
         jumpQueued = true;
         prevent(ev);
-      } else if (ev.code === "ArrowDown") {
+      } else if (ev.code === "ArrowDown" || ev.code === "KeyS") {
         duckKey = true;
         prevent(ev);
       }
     }
 
     function onKeyUp(ev) {
-      if (ev.code === "ArrowDown") {
+      if (ev.code === "ArrowDown" || ev.code === "KeyS") {
         duckKey = false;
+        prevent(ev);
+      }
+      if (ev.code === "ArrowLeft" || ev.code === "KeyA") {
+        leftKey = false;
+        prevent(ev);
+      }
+      if (ev.code === "ArrowRight" || ev.code === "KeyD") {
+        rightKey = false;
         prevent(ev);
       }
     }
@@ -78,6 +91,7 @@
       startX = t.clientX;
       startY = t.clientY;
       duckTouch = false;
+      touchHold = { clientX: t.clientX, clientY: t.clientY };
     }
 
     function onTouchMove(ev) {
@@ -87,6 +101,7 @@
       if (t.clientY - startY >= Dino.Config.swipeDownMin) {
         duckTouch = true;
       }
+      touchHold = { clientX: t.clientX, clientY: t.clientY };
     }
 
     function onMouseUp(ev) {
@@ -105,8 +120,12 @@
       if (!duckTouch && dist < Dino.Config.tapMaxDist) {
         jumpQueued = true;
       }
+      if (!duckTouch && startY - t.clientY >= Dino.Config.swipeDownMin) {
+        jumpQueued = true;
+      }
       touchId = null;
       duckTouch = false;
+      touchHold = null;
     }
 
     return {
@@ -146,7 +165,11 @@
           duck: duckKey || duckTouch,
           chooseKey: key,
           choiceNudge: nudge,
-          pointer: ptr
+          pointer: ptr,
+          left: leftKey,
+          right: rightKey,
+          touchClientX: touchHold ? touchHold.clientX : null,
+          touchClientY: touchHold ? touchHold.clientY : null
         };
       }
     };

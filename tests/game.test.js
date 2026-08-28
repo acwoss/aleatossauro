@@ -9,6 +9,7 @@ require("../js/trex.js");
 require("../js/horizon.js");
 require("../js/obstacles.js");
 require("../js/powerups.js");
+require("../js/boss.js");
 require("../js/hud.js");
 var Dino = require("../js/game.js");
 
@@ -177,4 +178,33 @@ test("pedra só some quando tira um skate", function () {
   g.update(16, 1020, { jumpPressed: false, duck: false });
   assert.equal(g.kit.skate, 1);
   assert.equal(g.obstacles.filter(function (o) { return !o.remove; }).length, 0);
+});
+
+test("cruzar 5000 pontos congela numa luta de boss", function () {
+  var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
+  g.status = "RUNNING";
+  g.runningTime = 4000;
+  g.currentSpeed = 13;
+  g.distanceRan = 199960;
+  g.update(50, 2000, { jumpPressed: false, duck: false });
+  assert.equal(g.status, "BOSS");
+  assert.ok(g.fight && g.fight.boss);
+  assert.ok(g.fight.boss.scale > 1.3);
+  assert.ok(g.tRex.xPos < 80);
+  assert.ok(g.fight.boss.xPos > g.tRex.xPos);
+});
+
+test("no boss o dino anda com a seta e vencer devolve a corrida", function () {
+  var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
+  g.status = "RUNNING";
+  g.startBoss();
+  var x = g.tRex.xPos;
+  g.update(16, 1000, { left: true, right: false, jumpPressed: false, duck: false });
+  assert.equal(g.status, "BOSS");
+  assert.ok(g.tRex.xPos < x);
+  g.fight.boss.hp = 0;
+  g.update(500, 1600, { jumpPressed: false, duck: false });
+  assert.equal(g.status, "RUNNING");
+  assert.equal(g.tRex.xPos, Dino.Config.startXPos);
+  assert.ok(g.immuneMs > 0);
 });
