@@ -211,13 +211,20 @@
     }
     this.drawFauna(ctx, palette);
     for (i = 0; i < this.clouds.length; i++) {
-      Dino.drawRects(
-        ctx,
-        Dino.Sprites.cloud,
-        Math.round(this.clouds[i].x),
-        this.clouds[i].y,
-        palette.cloud
-      );
+      if (palette.biome === "water") {
+        ctx.fillStyle = palette.cloud;
+        ctx.fillRect(Math.round(this.clouds[i].x) + 6, this.clouds[i].y + 4, 3, 3);
+        ctx.fillRect(Math.round(this.clouds[i].x) + 12, this.clouds[i].y - 2, 5, 5);
+        ctx.fillRect(Math.round(this.clouds[i].x) + 20, this.clouds[i].y + 6, 2, 2);
+      } else {
+        Dino.drawRects(
+          ctx,
+          Dino.Sprites.cloud,
+          Math.round(this.clouds[i].x),
+          this.clouds[i].y,
+          palette.cloud
+        );
+      }
     }
   };
 

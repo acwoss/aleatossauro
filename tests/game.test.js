@@ -123,6 +123,14 @@ test("cruzar 400 pontos spawna um crate", function () {
   assert.ok(g.pickups.length >= 1);
 });
 
+test("em 2000 pontos a paleta fica de neve e em 4000 de água", function () {
+  var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
+  g.distanceRan = 80000;
+  assert.equal(g.colors().biome, "snow");
+  g.distanceRan = 160000;
+  assert.equal(g.colors().biome, "water");
+});
+
 test("pegar ovo abre dois cards e só aplica a escolha", function () {
   var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
   g.status = "RUNNING";
@@ -179,20 +187,20 @@ test("escolher evolução deixa o dino imune proporcional à inteligência", fun
   assert.ok(Dino.rpgStats(g.kit).int >= 4);
 });
 
-test("estrela soma imunidade extra depois da evolução", function () {
+test("evoluir aplica imunidade pela inteligência", function () {
   var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
   g.status = "CHOOSING";
-  g.choice = { options: [Dino.effectById("star"), Dino.effectById("heart")], selected: 0 };
+  g.choice = { options: [Dino.effectById("heart"), Dino.effectById("sword")], selected: 0 };
   g.hud.choice = g.choice;
   g.applyChoice(0, function () { return 0.5; });
-  assert.equal(g.immuneMs, Dino.evolutionImmuneMs(g.kit) + 1500);
+  assert.equal(g.immuneMs, Dino.evolutionImmuneMs(g.kit));
 });
 
-test("moicano aumenta a velocidade da corrida", function () {
+test("velocidade aumenta a corrida", function () {
   var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
   var before = g.currentSpeed;
   g.status = "CHOOSING";
-  g.choice = { options: [Dino.effectById("mohawk"), Dino.effectById("heart")], selected: 0 };
+  g.choice = { options: [Dino.effectById("boots"), Dino.effectById("heart")], selected: 0 };
   g.hud.choice = g.choice;
   g.applyChoice(0, function () { return 0.5; });
   assert.ok(g.currentSpeed > before);
@@ -237,6 +245,29 @@ test("depois da imunidade o cacto mata com 1 de vida", function () {
   g.update(16, 1000, { jumpPressed: false, duck: false });
   assert.equal(g.status, "CRASHED");
   assert.equal(g.kit.hp, 0);
+});
+
+test("titã esmaga cacto pequeno sem perder vida", function () {
+  var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
+  g.status = "RUNNING";
+  g.runningTime = 4000;
+  g.immuneMs = 0;
+  Dino.applyEffect(g.kit, "titan");
+  Dino.syncTrexFromKit(g.tRex, g.kit);
+  var hp = g.kit.hp;
+  g.tRex.update(0, Dino.TrexStatus.RUNNING);
+  var cactusType = Dino.OBSTACLE_TYPES.filter(function (t) { return t.type === "cactusSmall"; })[0];
+  var cactus = new Dino.Obstacle(cactusType, g.tRex.xPos, 0.6, 6, false);
+  cactus.xPos = g.tRex.xPos + 8;
+  cactus.size = 1;
+  cactus.width = cactusType.width;
+  cactus.cloneCollisionBoxes();
+  g.obstacles = [cactus];
+  g.update(16, 1000, { jumpPressed: false, duck: false });
+  assert.equal(g.status, "RUNNING");
+  assert.equal(g.kit.hp, hp);
+  assert.equal(cactus.remove, true);
+  assert.equal(g.hurtFlashMs, 0);
 });
 
 test("com vida extra o cacto fere e não mata", function () {
@@ -292,23 +323,27 @@ test("imunidade acaba após 3s", function () {
   assert.equal(g.immuneMs, 0);
 });
 
-test("ímã no pulo abre a escolha em vez de sumir com o ovo", function () {
+test("ovo no pulo abre a escolha em vez de sumir", function () {
   var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
   g.status = "RUNNING";
   g.runningTime = 4000;
-  var i;
-  for (i = 0; i < 12; i++) Dino.applyEffect(g.kit, "magnet");
-  Dino.syncTrexFromKit(g.tRex, g.kit);
   g.tRex.startJump(g.currentSpeed);
   g.tRex.updateJump(100);
   assert.ok(g.tRex.jumping);
-  g.pickups.push(Dino.createPickup(g.tRex.xPos + 220));
+  g.pickups.push({
+    xPos: g.tRex.xPos,
+    yPos: g.tRex.yPos,
+    width: 22,
+    height: 18,
+    remove: false,
+    bob: 0
+  });
   g.update(16.67, 1000, { jumpPressed: false, duck: false });
   assert.equal(g.status, "CHOOSING");
   assert.ok(g.choice && g.choice.options.length === 2);
 });
 
-test("pedra tira skate ou vida", function () {
+test("pedra tira vida", function () {
   var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
   g.status = "RUNNING";
   g.runningTime = 0;
@@ -319,20 +354,10 @@ test("pedra tira skate ou vida", function () {
   var rock = new Dino.Obstacle(rockType, g.tRex.xPos, 0.6, 6, false);
   rock.xPos = g.tRex.xPos + 12;
   g.obstacles = [rock];
-  g.kit.skate = 0;
   var hp = g.kit.hp;
   g.update(16, 1000, { jumpPressed: false, duck: false });
   assert.equal(g.status, "RUNNING");
   assert.ok(g.kit.hp < hp);
-  rock = new Dino.Obstacle(rockType, g.tRex.xPos, 0.6, 6, false);
-  rock.xPos = g.tRex.xPos + 12;
-  g.obstacles = [rock];
-  hp = g.kit.hp;
-  g.kit.skate = 2;
-  g.update(16, 1020, { jumpPressed: false, duck: false });
-  assert.equal(g.kit.skate, 1);
-  assert.equal(g.kit.hp, hp);
-  assert.equal(g.obstacles.filter(function (o) { return !o.remove; }).length, 0);
 });
 
 test("cruzar 5000 pontos congela numa luta de boss", function () {

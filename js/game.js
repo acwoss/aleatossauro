@@ -208,7 +208,6 @@
     this.choice = null;
     this.hud.choice = null;
     this.immuneMs = Dino.evolutionImmuneMs(this.kit);
-    if (applied.indexOf("star") !== -1) this.immuneMs += 1500;
     this.status = "RUNNING";
   };
 
@@ -303,9 +302,6 @@
     );
     if (input.jumpPressed) {
       this.tRex.startJump(Dino.Config.speed);
-      if (this.tRex.jumping && this.kit.cloak > 0) {
-        this.immuneMs = Math.max(this.immuneMs, 300 * this.kit.cloak);
-      }
     }
     if (input.duck && !this.tRex.jumping) {
       this.tRex.setDuck(true);
@@ -567,9 +563,6 @@
 
     if (input.jumpPressed) {
       this.tRex.startJump(this.currentSpeed);
-      if (this.tRex.jumping && this.kit.cloak > 0) {
-        this.immuneMs = Math.max(this.immuneMs, 300 * this.kit.cloak);
-      }
     }
     if (input.duck && !this.tRex.jumping) {
       this.tRex.setDuck(true);
@@ -636,6 +629,10 @@
           }
         }
         var hit = Dino.resolveObstacleHit(this.kit, front);
+        if (hit === "stomp") {
+          front.remove = true;
+          continue;
+        }
         if (hit === "crash") {
           this.crash(now);
           return;
@@ -654,7 +651,7 @@
     var maxSpeed =
       typeof Dino.maxRunSpeed === "function"
         ? Dino.maxRunSpeed(this.kit)
-        : Dino.Config.maxSpeed + this.kit.skate * 1.4 + (this.kit.boots || 0) * 1.2;
+        : Dino.Config.maxSpeed + (this.kit.boots || 0) * 1.2;
     this.distanceRan +=
       this.currentSpeed *
       Dino.scoreMultiplier(this.kit) *
@@ -663,7 +660,7 @@
     if (this.currentSpeed < maxSpeed) {
       this.currentSpeed +=
         Dino.Config.acceleration *
-        (1 + (typeof Dino.kitSpd === "function" ? Dino.kitSpd(this.kit) : this.kit.skate) * 0.4);
+        (1 + (typeof Dino.kitSpd === "function" ? Dino.kitSpd(this.kit) : this.kit.boots || 0) * 0.4);
     }
     if (Dino.crossedBossThreshold(prevActual, Dino.getActualDistance(this.distanceRan))) {
       this.startBoss();
@@ -685,7 +682,9 @@
   };
 
   Game.prototype.colors = function () {
-    return Dino.palette(this.inverted);
+    var actual = Dino.getActualDistance(this.distanceRan);
+    var biome = typeof Dino.biomeAt === "function" ? Dino.biomeAt(actual) : "desert";
+    return Dino.palette(this.inverted, biome);
   };
 
   Game.prototype.draw = function (ctx, cssW, cssH, dpr) {

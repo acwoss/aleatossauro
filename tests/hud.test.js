@@ -106,7 +106,7 @@ test("ícones do kit ficam à esquerda e não invadem o score", function () {
   var kit = Dino.createPowerKit();
   Dino.applyEffect(kit, "sword");
   Dino.applyEffect(kit, "gravity");
-  Dino.applyEffect(kit, "hat");
+  Dino.applyEffect(kit, "spring");
   var layout = Dino.hudIconLayout(Dino.kitHudItems(kit), 8, 3, 220);
   assert.ok(layout.length >= 3);
   layout.forEach(function (slot) {

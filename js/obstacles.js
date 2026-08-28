@@ -142,19 +142,28 @@
     }
   };
 
+  Dino.obstacleSprite = function (type, frame, biome) {
+    if (type === "pterodactyl") {
+      if (biome === "water") {
+        return frame ? Dino.Sprites.mosa2 : Dino.Sprites.mosa1;
+      }
+      return frame ? Dino.Sprites.ptero2 : Dino.Sprites.ptero1;
+    }
+    if (type === "cactusLarge") {
+      return biome === "water" ? Dino.Sprites.algaeLarge : Dino.Sprites.cactusLarge;
+    }
+    if (type === "rock") return Dino.Sprites.rock;
+    return biome === "water" ? Dino.Sprites.algaeSmall : Dino.Sprites.cactusSmall;
+  };
+
   Obstacle.prototype.draw = function (ctx, palette) {
-    var sprite;
+    var biome = (palette && palette.biome) || "desert";
+    var sprite = Dino.obstacleSprite(this.typeConfig.type, this.currentFrame, biome);
     var color = palette.cactus;
     if (this.typeConfig.type === "pterodactyl") {
-      sprite = this.currentFrame === 0 ? Dino.Sprites.ptero1 : Dino.Sprites.ptero2;
       color = palette.ptero;
-    } else if (this.typeConfig.type === "cactusLarge") {
-      sprite = Dino.Sprites.cactusLarge;
     } else if (this.typeConfig.type === "rock") {
-      sprite = Dino.Sprites.rock;
       color = palette.rock || palette.ground;
-    } else {
-      sprite = Dino.Sprites.cactusSmall;
     }
     var i;
     for (i = 0; i < this.size; i++) {

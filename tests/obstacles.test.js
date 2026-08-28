@@ -44,3 +44,30 @@ test("há pedras no caminho", function () {
   var feetY = Dino.DEFAULT_HEIGHT - Dino.Config.bottomPad;
   assert.equal(rock.yPos + rock.height, feetY);
 });
+
+test("debaixo da água cacto vira alga e ptero vira mosassauro", function () {
+  assert.equal(
+    Dino.obstacleSprite("cactusSmall", 0, "desert"),
+    Dino.Sprites.cactusSmall
+  );
+  assert.equal(
+    Dino.obstacleSprite("cactusSmall", 0, "water"),
+    Dino.Sprites.algaeSmall
+  );
+  assert.equal(
+    Dino.obstacleSprite("cactusLarge", 0, "water"),
+    Dino.Sprites.algaeLarge
+  );
+  assert.equal(
+    Dino.obstacleSprite("pterodactyl", 0, "desert"),
+    Dino.Sprites.ptero1
+  );
+  assert.equal(
+    Dino.obstacleSprite("pterodactyl", 1, "water"),
+    Dino.Sprites.mosa2
+  );
+  assert.equal(
+    Dino.obstacleSprite("pterodactyl", 0, "snow"),
+    Dino.Sprites.ptero1
+  );
+});

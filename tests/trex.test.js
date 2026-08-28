@@ -25,14 +25,14 @@ function jumpPeakHeight(kit) {
 
 test("altura do pulo é proporcional ao atributo de pulo", function () {
   var empty = Dino.createPowerKit();
-  var hat = Dino.createPowerKit();
+  var hop = Dino.createPowerKit();
   var h0;
-  var hHat;
-  Dino.applyEffect(hat, "hat");
+  var hHop;
+  Dino.applyEffect(hop, "spear");
   h0 = jumpPeakHeight(empty);
-  hHat = jumpPeakHeight(hat);
-  assert.ok(hHat > h0);
-  assert.ok(Math.abs(hHat / h0 - Dino.rpgStats(hat).jump) < 0.4);
+  hHop = jumpPeakHeight(hop);
+  assert.ok(hHop > h0);
+  assert.ok(Math.abs(hHop / h0 - Dino.rpgStats(hop).jump) < 0.4);
 });
 
 test("pulo sobe e volta ao chão", function () {
@@ -73,28 +73,26 @@ test("extraJumps permite segundo pulo no ar", function () {
   assert.ok(t.yPos <= yMid);
 });
 
-test("no chão com skate usa pose parada, não corrida", function () {
+test("no chão usa pose de corrida", function () {
   var groundY = 150 - 47 - 10;
   var t = new Dino.Trex(groundY);
-  t.powerKit = { skate: 1, wings: 0, balloon: 0, hats: 0, blaster: 0, shields: 0, ghosts: 0 };
   t.update(0, Dino.TrexStatus.RUNNING);
-  assert.equal(t.poseKey(), "skate");
+  assert.ok(t.poseKey() === "run1" || t.poseKey() === "run2");
 });
 
 test("descida cai mais rápido que a subida", function () {
   var groundY = 150 - 47 - 10;
-  function dropY(gravityStacks) {
+  function yAfter(vel) {
     var t = new Dino.Trex(groundY);
-    t.powerKit = { gravity: gravityStacks, skate: 0 };
     t.jumping = true;
-    t.jumpVelocity = 4;
+    t.jumpVelocity = vel;
     t.yPos = 50;
     t.update(0, Dino.TrexStatus.JUMPING);
     t.updateJump(20);
     t.updateJump(20);
     return t.yPos;
   }
-  assert.ok(dropY(2) > dropY(0));
+  assert.ok(yAfter(4) > yAfter(-4));
 });
 
 test("mini-rex fica com os pés no chão", function () {
@@ -106,6 +104,20 @@ test("mini-rex fica com os pés no chão", function () {
   Dino.syncTrexFromKit(t, kit);
   assert.equal(t.yPos, groundY);
   assert.ok(t.drawScale < 1);
+  assert.equal(t.config.height, Dino.Config.trexHeight);
+  assert.equal(Dino.drawFeetY(t), groundY + Dino.Config.trexHeight);
+});
+
+test("evolução sem tamanho não muda a escala", function () {
+  var groundY = 150 - 47 - 10;
+  var t = new Dino.Trex(groundY);
+  var kit = Dino.createPowerKit();
+  Dino.applyEffect(kit, "heart");
+  Dino.applyEffect(kit, "boots");
+  Dino.applyEffect(kit, "sword");
+  Dino.syncTrexFromKit(t, kit);
+  assert.equal(t.yPos, groundY);
+  assert.equal(t.drawScale, 1);
   assert.equal(t.config.height, Dino.Config.trexHeight);
   assert.equal(Dino.drawFeetY(t), groundY + Dino.Config.trexHeight);
 });

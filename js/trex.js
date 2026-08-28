@@ -184,13 +184,6 @@
     if (this.status === Status.WAITING) {
       return this.blinkOn ? "blink" : "wait";
     }
-    var skating =
-      this.powerKit &&
-      this.powerKit.skate > 0 &&
-      !this.jumping &&
-      this.status !== Status.CRASHED;
-    if (skating && this.status === Status.DUCKING) return "duck1";
-    if (skating) return "skate";
     return this.currentAnimFrames[this.currentFrame];
   };
 
@@ -204,10 +197,9 @@
     var kit = this.powerKit;
     var scale = this.drawScale || 1;
     var body = palette.dino;
-    var gear = typeof Dino.sideGear === "function" ? Dino.sideGear(kit, this.xPos, this.yPos, this.ducking) : { wings: [], balloons: [], skate: false, skates: [], hats: [] };
+    var gear = typeof Dino.sideGear === "function" ? Dino.sideGear(kit, this.xPos, this.yPos, this.ducking) : {};
     ctx.save();
     var alpha = 1;
-    if (kit && kit.ghosts > 0) alpha = 0.55;
     if ((this.immuneMs || 0) > 0 && Math.floor(this.immuneMs / 100) % 2 === 0) {
       alpha *= 0.35;
     }
@@ -223,54 +215,11 @@
       ctx.scale(scale, scale);
       ctx.translate(-this.xPos, -feetY);
     }
-    var i;
-    function drawCosmetics(behind) {
-      var ci;
-      var c;
-      var spr;
-      if (!gear.cosmetics) return;
-      for (ci = 0; ci < gear.cosmetics.length; ci++) {
-        c = gear.cosmetics[ci];
-        if (!!c.behind !== behind) continue;
-        spr = Dino.Sprites.fx && Dino.Sprites.fx[c.id];
-        if (!spr) continue;
-        Dino.drawRects(
-          ctx,
-          spr,
-          c.x,
-          c.y,
-          typeof Dino.effectInk === "function" ? Dino.effectInk(c.id, palette) : body
-        );
-      }
-    }
-    drawCosmetics(true);
-    for (i = 0; i < gear.wings.length; i++) {
-      ctx.save();
-      ctx.translate(gear.wings[i].x, gear.wings[i].y);
-      ctx.scale(gear.wings[i].scale, gear.wings[i].scale);
-      Dino.drawRects(ctx, Dino.Sprites.wings, 0, 0, palette.wings);
-      ctx.restore();
-    }
-    for (i = 0; i < gear.balloons.length; i++) {
-      Dino.drawRects(
-        ctx,
-        Dino.Sprites.balloon,
-        gear.balloons[i].x,
-        gear.balloons[i].y,
-        palette.balloon[gear.balloons[i].color % palette.balloon.length]
-      );
-    }
     if (this.skin && typeof Dino.drawSkinnedRects === "function") {
       Dino.drawSkinnedRects(ctx, rects, this.xPos, this.yPos, this.skin, body, name);
     } else {
       Dino.drawRects(ctx, rects, this.xPos, this.yPos, body);
     }
-    if (gear.hats) {
-      for (i = 0; i < gear.hats.length; i++) {
-        Dino.drawRects(ctx, Dino.Sprites.hat, gear.hats[i].x, gear.hats[i].y, palette.hat);
-      }
-    }
-    drawCosmetics(false);
     if (gear.gun) {
       Dino.drawRects(ctx, Dino.Sprites.gun, gear.gun.x, gear.gun.y, palette.gun);
     }
@@ -280,15 +229,6 @@
     }
     if (gear.spear && Dino.Sprites.spear) {
       Dino.drawRects(ctx, Dino.Sprites.spear, gear.spear.x, gear.spear.y, palette.spear || palette.cactus);
-    }
-    if (gear.shield) {
-      ctx.globalAlpha = 0.5 * alpha;
-      Dino.drawRects(ctx, Dino.Sprites.shield, gear.shield.x, gear.shield.y, palette.shield);
-      ctx.globalAlpha = alpha;
-    }
-    var boards = gear.skates && gear.skates.length ? gear.skates : gear.skate ? [{ x: this.xPos + 8, y: this.yPos + 42 }] : [];
-    for (i = 0; i < boards.length; i++) {
-      Dino.drawRects(ctx, Dino.Sprites.skate, boards[i].x, boards[i].y, palette.skate);
     }
     ctx.restore();
   };

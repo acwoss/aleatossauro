@@ -17,6 +17,10 @@ test("frames do trex e obstáculos existem", function () {
   assert.ok(Dino.Sprites.trex.run1.length > 3);
   assert.ok(Dino.Sprites.cactusSmall.length > 0);
   assert.ok(Dino.Sprites.ptero1.length > 0);
+  assert.ok(Dino.Sprites.algaeSmall.length > 0);
+  assert.ok(Dino.Sprites.algaeLarge.length > 0);
+  assert.ok(Dino.Sprites.mosa1.length > 0);
+  assert.ok(Dino.Sprites.mosa2.length > 0);
   assert.ok(Dino.Sprites.digit0.length > 0);
   assert.ok(Dino.Sprites.nest.length > 2);
   assert.ok(Dino.Sprites.egg.length > 1);
@@ -57,14 +61,7 @@ test("ícones vestíveis lembram o objeto", function () {
     var icon = Dino.Sprites.fx[id];
     assert.ok(icon && icon.some(pred), msg || id);
   }
-  has("patch", function (r) { return r.w >= 8 && r.h <= 2; }, "tapa-olho precisa de faixa");
-  has("patch", function (r) { return r.w >= 4 && r.h >= 4 && r.w <= 7; }, "tapa-olho precisa de cobertura");
-  has("shades", function (r) { return r.w >= 3 && r.w <= 5 && r.h >= 2 && r.h <= 4; }, "óculos precisa de lentes");
-  has("goggles", function (r) { return r.w >= 3 && r.h >= 4; }, "óculos de mergulho precisa de copos");
-  has("monocle", function (r) { return r.w === 2 && r.h >= 4; }, "monóculo precisa de aro");
-  has("crown", function (r) { return r.y <= 1 && r.h >= 3 && r.w <= 3; }, "coroa precisa de pontas");
-  has("cowboy", function (r) { return r.w >= 9 && r.h <= 3; }, "chapéu cowboy precisa de aba");
-  has("bone", function (r) { return r.w >= 5 && r.h <= 3; }, "osso precisa de haste");
-  has("scarf", function (r) { return r.h >= 4 && r.w <= 4; }, "cachecol precisa de pontas");
-  has("jetpack", function (r) { return r.y >= 6 && r.h >= 2 && r.w <= 4; }, "jetpack precisa de jatos");
+  has("sword", function (r) { return r.h >= 6; }, "espada precisa de lâmina");
+  has("spear", function (r) { return r.h >= 7; }, "lança precisa de haste");
+  has("blaster", function (r) { return r.w >= 4; }, "blaster precisa de cano");
 });

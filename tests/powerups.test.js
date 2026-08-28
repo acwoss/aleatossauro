@@ -5,19 +5,27 @@ require("../js/collision.js");
 require("../js/sprites.js");
 var Dino = require("../js/powerups.js");
 
-test("há pelo menos 25 efeitos sorteáveis", function () {
-  assert.ok(Dino.EFFECTS.length >= 75);
+test("evoluções são atributos, armas e tamanho", function () {
   var ids = Dino.EFFECTS.map(function (e) { return e.id; });
+  var weapons;
+  assert.ok(Dino.EFFECTS.length >= 10);
+  assert.ok(Dino.EFFECTS.length <= 14);
   [
-    "doubleJump", "skate", "hat", "blaster", "shield",
-    "magnet", "mini", "titan", "wings", "coffee",
-    "spring", "clock", "ghost", "balloon", "gravity",
-    "sword", "spear", "heart", "boots", "ice",
-    "chili", "crystal", "cloak", "quake", "horn", "star", "potion"
+    "doubleJump", "boots", "heart", "coffee", "gravity",
+    "spring", "shield", "sword", "spear", "blaster",
+    "mini", "titan"
   ].forEach(function (id) {
     assert.ok(ids.indexOf(id) !== -1, "falta efeito " + id);
   });
   assert.equal(ids.length, new Set(ids).size);
+  Dino.EFFECTS.forEach(function (e) {
+    assert.ok(e.stats && Object.keys(e.stats).length, "falta stats " + e.id);
+    assert.ok(!e.slot, "cosmético não pode entrar no pool " + e.id);
+  });
+  weapons = Dino.EFFECTS.filter(function (e) { return e.weapon; });
+  assert.equal(weapons.length, 3);
+  assert.equal(Dino.effectById("mini").weapon, undefined);
+  assert.equal(Dino.effectById("titan").weapon, undefined);
 });
 
 test("cruzar o primeiro ovo em 400 pontos", function () {
@@ -58,23 +66,23 @@ test("intervalo do ovo cresce com o score e cai com inteligência", function () 
 
 test("itens com PULO aumentam o impulso na mesma proporção do atributo", function () {
   var empty = { config: {}, groundYPos: 93 };
-  var ribbon = { config: {}, groundYPos: 93 };
-  var cape = { config: {}, groundYPos: 93 };
-  var kitR = Dino.createPowerKit();
-  var kitC = Dino.createPowerKit();
+  var hop = { config: {}, groundYPos: 93 };
+  var spring = { config: {}, groundYPos: 93 };
+  var kitH = Dino.createPowerKit();
+  var kitS = Dino.createPowerKit();
   var v0;
   Dino.syncTrexFromKit(empty, Dino.createPowerKit());
-  Dino.applyEffect(kitR, "ribbon");
-  Dino.syncTrexFromKit(ribbon, kitR);
-  Dino.applyEffect(kitC, "cape");
-  Dino.syncTrexFromKit(cape, kitC);
+  Dino.applyEffect(kitH, "doubleJump");
+  Dino.syncTrexFromKit(hop, kitH);
+  Dino.applyEffect(kitS, "spring");
+  Dino.syncTrexFromKit(spring, kitS);
   v0 = empty.config.initialJumpVelocity;
-  assert.equal(Dino.rpgStats(kitR).jump, 2);
-  assert.equal(Dino.rpgStats(kitC).jump, 3);
-  assert.ok(ribbon.config.initialJumpVelocity < v0);
-  assert.ok(cape.config.initialJumpVelocity < ribbon.config.initialJumpVelocity);
-  assert.ok(Math.abs(ribbon.config.initialJumpVelocity / v0 - Math.sqrt(2)) < 0.02);
-  assert.ok(Math.abs(cape.config.initialJumpVelocity / v0 - Math.sqrt(3)) < 0.02);
+  assert.equal(Dino.rpgStats(kitH).jump, 3);
+  assert.equal(Dino.rpgStats(kitS).jump, 4);
+  assert.ok(hop.config.initialJumpVelocity < v0);
+  assert.ok(spring.config.initialJumpVelocity < hop.config.initialJumpVelocity);
+  assert.ok(Math.abs(hop.config.initialJumpVelocity / v0 - Math.sqrt(3)) < 0.02);
+  assert.ok(Math.abs(spring.config.initialJumpVelocity / v0 - 2) < 0.02);
 });
 
 test("efeito oculto é aleatório e só com 1% de sorte", function () {
@@ -95,10 +103,8 @@ test("efeito oculto é aleatório e só com 1% de sorte", function () {
 test("itens com VEL aumentam a corrida, não só o card", function () {
   var kit = Dino.createPowerKit();
   var base = Dino.maxRunSpeed(kit);
-  Dino.applyEffect(kit, "mohawk");
-  Dino.applyEffect(kit, "socks");
-  Dino.applyEffect(kit, "flag");
-  assert.equal(Dino.kitSpd(kit), 3);
+  Dino.applyEffect(kit, "boots");
+  assert.equal(Dino.kitSpd(kit), 2);
   assert.ok(Dino.maxRunSpeed(kit) > base);
   assert.ok(Dino.runSpeedBonus(kit) > 0);
 });
@@ -132,83 +138,13 @@ test("rollEffect usa o rng e aplica o id", function () {
 test("resolveObstacleHit tira vida e só derruba em 0", function () {
   var kit = Dino.createPowerKit();
   var large = { typeConfig: { type: "cactusLarge" } };
-  var small = { typeConfig: { type: "cactusSmall" } };
   assert.equal(kit.hp, 1);
   Dino.applyEffect(kit, "heart");
   assert.ok(kit.hp > 1);
   assert.equal(Dino.resolveObstacleHit(kit, large), "hurt");
-  Dino.applyEffect(kit, "titan");
-  assert.equal(Dino.resolveObstacleHit(kit, small), "stomp");
   kit.hp = 1;
   assert.equal(Dino.resolveObstacleHit(kit, large), "crash");
   assert.equal(kit.hp, 0);
-});
-
-test("ímã puxa o pickup em direção ao dino", function () {
-  var kit = Dino.createPowerKit();
-  Dino.applyEffect(kit, "magnet");
-  var pickup = { xPos: 110, yPos: 80, width: 16, height: 16, remove: false };
-  var tRex = { xPos: 50, yPos: 93, config: { width: 44, height: 47 } };
-  Dino.updatePickup(pickup, 16.67, 6, kit, tRex);
-  assert.ok(pickup.xPos < 110);
-});
-
-test("ímã puxa o ovo para cima quando o dino está no ar", function () {
-  var kit = Dino.createPowerKit();
-  Dino.applyEffect(kit, "magnet");
-  var pickup = Dino.createPickup(50);
-  var groundY = pickup.yPos;
-  var tRex = { xPos: 50, yPos: 40, config: { width: 44, height: 47 } };
-  Dino.updatePickup(pickup, 16.67, 6, kit, tRex);
-  assert.ok(pickup.yPos < groundY);
-});
-
-test("ovo imantado no pulo encosta no dino em vez de sumir", function () {
-  var kit = Dino.createPowerKit();
-  Dino.applyEffect(kit, "magnet");
-  var pickup = Dino.createPickup(50);
-  var tRex = { xPos: 50, yPos: 40, config: { width: 44, height: 47 } };
-  var n;
-  for (n = 0; n < 40; n++) {
-    Dino.updatePickup(pickup, 16.67, 6, kit, tRex);
-    if (pickup.remove || Dino.pickupHitsTrex(pickup, tRex)) break;
-  }
-  assert.equal(pickup.remove, false);
-  assert.ok(Dino.pickupHitsTrex(pickup, tRex));
-});
-
-test("ímã forte não atravessa o dino no pulo", function () {
-  var kit = Dino.createPowerKit();
-  var i;
-  for (i = 0; i < 12; i++) Dino.applyEffect(kit, "magnet");
-  var pickup = Dino.createPickup(400);
-  var tRex = { xPos: 50, yPos: 40, config: { width: 44, height: 47 } };
-  Dino.updatePickup(pickup, 16.67, 6, kit, tRex);
-  assert.equal(pickup.remove, false);
-  assert.ok(Dino.pickupHitsTrex(pickup, tRex));
-});
-
-test("alcance do ímã cresce a cada pilha", function () {
-  assert.equal(Dino.magnetRange({ magnet: 0 }), 0);
-  assert.ok(Dino.magnetRange({ magnet: 1 }) > 0);
-  assert.ok(Dino.magnetRange({ magnet: 2 }) > Dino.magnetRange({ magnet: 1 }));
-  assert.ok(Dino.magnetRange({ magnet: 3 }) > Dino.magnetRange({ magnet: 2 }));
-});
-
-test("1 ímã só puxa de perto; mais ímãs alcançam mais longe", function () {
-  var tRex = { xPos: 50, yPos: 93, config: { width: 44, height: 47 } };
-  var far = { xPos: 200, yPos: 80, width: 16, height: 16, remove: false };
-  var kit1 = Dino.createPowerKit();
-  Dino.applyEffect(kit1, "magnet");
-  var x0 = far.xPos;
-  Dino.updatePickup(far, 16.67, 0, kit1, tRex);
-  assert.equal(far.xPos, x0);
-  var kit3 = Dino.createPowerKit();
-  Dino.applyEffect(kit3, "magnet");
-  Dino.applyEffect(kit3, "magnet");
-  Dino.applyEffect(kit3, "magnet");
-  Dino.updatePickup(far, 16.67, 0, kit3, tRex);
-  assert.ok(far.xPos < x0);
 });
 
 test("ovo fica no chão e não flutua", function () {
@@ -229,14 +165,27 @@ test("efeito gravidade acumula queda mais rápida", function () {
   assert.ok(kit.gravity >= 2);
 });
 
-test("vista lateral: uma asa atrás, não duas", function () {
+test("só armas aparecem na skin", function () {
   var kit = Dino.createPowerKit();
-  Dino.applyEffect(kit, "wings");
-  Dino.applyEffect(kit, "wings");
-  var gear = Dino.sideGear(kit, 50, 93);
-  assert.equal(gear.wings.length, 1);
-  assert.ok(gear.wings[0].x >= 50);
-  assert.ok(gear.wings[0].x < 94);
+  Dino.applyEffect(kit, "heart");
+  Dino.applyEffect(kit, "boots");
+  Dino.applyEffect(kit, "spring");
+  Dino.applyEffect(kit, "mini");
+  Dino.applyEffect(kit, "titan");
+  Dino.applyEffect(kit, "sword");
+  Dino.applyEffect(kit, "spear");
+  Dino.applyEffect(kit, "blaster");
+  var stand = Dino.sideGear(kit, 50, 93, false);
+  var duck = Dino.sideGear(kit, 50, 93, true);
+  assert.equal((stand.cosmetics || []).length, 0);
+  assert.equal((stand.hats || []).length, 0);
+  assert.equal((stand.wings || []).length, 0);
+  assert.equal((stand.balloons || []).length, 0);
+  assert.ok(stand.sword);
+  assert.ok(stand.spear);
+  assert.ok(stand.gun);
+  assert.ok(duck.gun.y > stand.gun.y);
+  assert.ok(duck.sword.x > stand.sword.x);
 });
 
 test("rollChoicePair sorteia dois efeitos distintos sem aplicar", function () {
@@ -250,23 +199,19 @@ test("rollChoicePair sorteia dois efeitos distintos sem aplicar", function () {
   assert.equal(kit.extraJumps, 0);
 });
 
-test("mini, titã, balões e chapéus acumulam sem teto", function () {
+test("atributos acumulam sem teto", function () {
   var kit = Dino.createPowerKit();
   var i;
   for (i = 0; i < 5; i++) {
-    Dino.applyEffect(kit, "mini");
-    Dino.applyEffect(kit, "titan");
-    Dino.applyEffect(kit, "balloon");
-    Dino.applyEffect(kit, "hat");
-    Dino.applyEffect(kit, "wings");
+    Dino.applyEffect(kit, "heart");
+    Dino.applyEffect(kit, "boots");
+    Dino.applyEffect(kit, "gravity");
   }
-  assert.equal(kit.mini, 5);
-  assert.equal(kit.titan, 5);
-  assert.equal(kit.balloon, 5);
-  assert.equal(kit.hats, 5);
-  var gear = Dino.sideGear(kit, 50, 93);
-  assert.equal(gear.balloons.length, 5);
-  assert.ok(gear.wings[0].scale > 1 + 0.28 * 3);
+  assert.equal(kit.hearts, 5);
+  assert.equal(kit.boots, 5);
+  assert.equal(kit.gravity, 5);
+  assert.ok(Dino.rpgStats(kit).hpMax > 10);
+  assert.ok(Dino.kitSpd(kit) >= 10);
 });
 
 test("blaster ganha munição finita e o tiro consome", function () {
@@ -306,21 +251,13 @@ test("tiro só derruba um cacto do grupo", function () {
   assert.equal(o.remove, true);
 });
 
-test("pedra tira um skate e não mata sem skate", function () {
+test("pedra não usa skate e só passa o hit", function () {
   var kit = Dino.createPowerKit();
-  Dino.applyEffect(kit, "skate");
-  Dino.applyEffect(kit, "skate");
-  assert.equal(Dino.resolveRockHit(kit), "skate");
-  assert.equal(kit.skate, 1);
-  kit.skate = 0;
   assert.equal(Dino.resolveRockHit(kit), "pass");
-  assert.equal(kit.skate, 0);
 });
 
-test("ptero por cima estoura um balão uma vez", function () {
+test("ptero por cima não estoura balão", function () {
   var kit = Dino.createPowerKit();
-  Dino.applyEffect(kit, "balloon");
-  Dino.applyEffect(kit, "balloon");
   var tRex = { xPos: 50, yPos: 93, config: { width: 44, height: 47 } };
   var ptero = {
     typeConfig: { type: "pterodactyl" },
@@ -329,39 +266,17 @@ test("ptero por cima estoura um balão uma vez", function () {
     yPos: 50,
     balloonPopped: false
   };
-  assert.equal(Dino.tryPopBalloon(kit, ptero, tRex), true);
-  assert.equal(kit.balloon, 1);
   assert.equal(Dino.tryPopBalloon(kit, ptero, tRex), false);
-  assert.equal(kit.balloon, 1);
 });
 
-test("balão, asa e skate ficam no corpo e skates empilham", function () {
+test("armas descem com o corpo quando o dino agacha", function () {
   var kit = Dino.createPowerKit();
-  Dino.applyEffect(kit, "balloon");
-  Dino.applyEffect(kit, "wings");
-  Dino.applyEffect(kit, "skate");
-  Dino.applyEffect(kit, "skate");
-  Dino.applyEffect(kit, "skate");
-  var gear = Dino.sideGear(kit, 50, 93);
-  assert.ok(gear.balloons[0].y >= 93 - 6);
-  assert.ok(gear.wings[0].x >= 50);
-  assert.equal(gear.skates.length, 3);
-});
-
-test("itens descem com o corpo quando o dino agacha", function () {
-  var kit = Dino.createPowerKit();
-  Dino.applyEffect(kit, "balloon");
-  Dino.applyEffect(kit, "wings");
-  Dino.applyEffect(kit, "hat");
   Dino.applyEffect(kit, "blaster");
-  Dino.applyEffect(kit, "shield");
+  Dino.applyEffect(kit, "sword");
   var stand = Dino.sideGear(kit, 50, 93, false);
   var duck = Dino.sideGear(kit, 50, 93, true);
-  assert.ok(duck.wings[0].y > stand.wings[0].y);
-  assert.ok(duck.balloons[0].y > stand.balloons[0].y);
-  assert.ok(duck.hats[0].y > stand.hats[0].y);
   assert.ok(duck.gun.y > stand.gun.y);
-  assert.ok(duck.shield.y > stand.shield.y);
+  assert.ok(duck.sword.x > stand.sword.x);
 });
 
 test("espada e lança geram hitbox à frente do dino", function () {
@@ -387,18 +302,6 @@ test("coração aumenta a vida máxima e o hit só reduz HP", function () {
   assert.equal(Dino.resolveObstacleHit(kit, large), "hurt");
   assert.ok(kit.hp > 1);
   assert.equal(kit.hearts, 1);
-});
-
-test("poção cura 5 de vida", function () {
-  var kit = Dino.createPowerKit();
-  assert.equal(kit.hp, 1);
-  Dino.applyEffect(kit, "potion");
-  assert.equal(kit.potions, 1);
-  assert.equal(kit.hp, 6);
-  assert.equal(kit.hpMax, 6);
-  var e = Dino.effectById("potion");
-  assert.equal(e.stats.hp, 5);
-  assert.ok(Dino.effectStatLine(e).indexOf("+5 VIDA") !== -1);
 });
 
 test("canAttack só com arma ou blaster", function () {
@@ -429,35 +332,35 @@ test("rpgStats escala força, velocidade, vida, pulo e inteligência", function 
   var kit = Dino.createPowerKit();
   Dino.applyEffect(kit, "gravity");
   Dino.applyEffect(kit, "sword");
-  Dino.applyEffect(kit, "skate");
+  Dino.applyEffect(kit, "boots");
   Dino.applyEffect(kit, "heart");
   Dino.applyEffect(kit, "doubleJump");
   Dino.applyEffect(kit, "coffee");
   var s = Dino.rpgStats(kit);
   assert.ok(s.str >= 3);
-  assert.equal(s.spd, 7);
+  assert.equal(s.spd, 8);
   assert.ok(s.hpMax > 3);
   assert.equal(s.hp, s.hpMax);
   assert.ok(s.jump >= 2);
   assert.ok(s.int >= 4);
 });
 
-test("café dá mais inteligência que o ímã", function () {
+test("café dá mais inteligência que o pulo", function () {
   var cafe = Dino.createPowerKit();
-  var ima = Dino.createPowerKit();
+  var hop = Dino.createPowerKit();
   Dino.applyEffect(cafe, "coffee");
-  Dino.applyEffect(ima, "magnet");
-  assert.ok(Dino.rpgStats(cafe).int > Dino.rpgStats(ima).int);
+  Dino.applyEffect(hop, "doubleJump");
+  assert.ok(Dino.rpgStats(cafe).int > Dino.rpgStats(hop).int);
 });
 
-test("titã rende mais de um atributo e chapéu rende menos no total", function () {
-  var titan = Dino.effectById("titan").stats;
-  var hat = Dino.effectById("hat").stats;
-  assert.ok(titan.str >= 1 && titan.hp >= 1);
+test("lança rende mais de um atributo e velocidade rende um só", function () {
+  var spear = Dino.effectById("spear").stats;
+  var boots = Dino.effectById("boots").stats;
+  assert.ok(spear.str >= 1 && spear.jump >= 1);
   function total(s) {
     return (s.str || 0) + (s.spd || 0) + (s.hp || 0) + (s.jump || 0) + (s.int || 0);
   }
-  assert.ok(total(titan) > total(hat));
+  assert.ok(total(spear) >= total(boots));
 });
 
 test("toda evolução tem descrição do que faz", function () {
@@ -466,6 +369,43 @@ test("toda evolução tem descrição do que faz", function () {
     assert.ok(e.stats, "falta stats " + e.id);
     assert.ok(Dino.effectStatLine(e).indexOf("+") !== -1, "falta linha de atributo " + e.id);
   });
+});
+
+test("mini encolhe e titã cresce, com os pés no chão", function () {
+  var groundY = 150 - 47 - 10;
+  var mini = { config: {}, groundYPos: groundY, yPos: groundY };
+  var titan = { config: {}, groundYPos: groundY, yPos: groundY };
+  var both = { config: {}, groundYPos: groundY, yPos: groundY };
+  var kitM = Dino.createPowerKit();
+  var kitT = Dino.createPowerKit();
+  var kitB = Dino.createPowerKit();
+  Dino.applyEffect(kitM, "mini");
+  Dino.applyEffect(kitM, "mini");
+  Dino.syncTrexFromKit(mini, kitM);
+  Dino.applyEffect(kitT, "titan");
+  Dino.syncTrexFromKit(titan, kitT);
+  Dino.applyEffect(kitB, "mini");
+  Dino.applyEffect(kitB, "titan");
+  Dino.syncTrexFromKit(both, kitB);
+  assert.ok(mini.drawScale < 1);
+  assert.ok(Math.abs(mini.drawScale - 0.68 * 0.68) < 0.001);
+  assert.ok(titan.drawScale > 1);
+  assert.ok(Math.abs(titan.drawScale - 1.22) < 0.001);
+  assert.ok(Math.abs(both.drawScale - 0.68 * 1.22) < 0.001);
+  assert.equal(mini.yPos, groundY);
+  assert.equal(titan.yPos, groundY);
+  assert.equal(Dino.drawFeetY(mini), groundY + Dino.Config.trexHeight);
+  assert.equal(mini.config.height, Dino.Config.trexHeight);
+});
+
+test("titã esmaga cacto pequeno e ainda toma dano do grande", function () {
+  var kit = Dino.createPowerKit();
+  Dino.applyEffect(kit, "titan");
+  var hp = kit.hp;
+  assert.equal(Dino.resolveObstacleHit(kit, { typeConfig: { type: "cactusSmall" } }), "stomp");
+  assert.equal(kit.hp, hp);
+  assert.equal(Dino.resolveObstacleHit(kit, { typeConfig: { type: "cactusLarge" } }), "hurt");
+  assert.ok(kit.hp < hp);
 });
 
 test("kitHudItems lista ícones com contagem e ignora esgotados", function () {
@@ -478,99 +418,4 @@ test("kitHudItems lista ícones com contagem e ignora esgotados", function () {
   assert.equal(items.length, 1);
   assert.equal(items[0].id, "sword");
   assert.equal(items[0].count, 1);
-});
-
-test("acessórios de olho usam o slot do olho", function () {
-  ["patch", "shades", "goggles", "monocle", "visor"].forEach(function (id) {
-    var e = Dino.EFFECTS.filter(function (x) { return x.id === id; })[0];
-    assert.ok(e, id);
-    assert.equal(e.slot, "eye", id);
-  });
-});
-
-test("tapa-olho e óculos cobrem o olho em pé e agachado", function () {
-  function bounds(rects) {
-    var minX = 99;
-    var minY = 99;
-    var maxX = 0;
-    var maxY = 0;
-    rects.forEach(function (r) {
-      if (r.x < minX) minX = r.x;
-      if (r.y < minY) minY = r.y;
-      if (r.x + r.w > maxX) maxX = r.x + r.w;
-      if (r.y + r.h > maxY) maxY = r.y + r.h;
-    });
-    return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
-  }
-  function overlaps(c, pose) {
-    var eye = Dino.trexParts(pose).eye;
-    var b = bounds(Dino.Sprites.fx[c.id]);
-    var left = c.x + b.x;
-    var top = c.y + b.y;
-    return left < eye.x + eye.w && left + b.w > eye.x && top < eye.y + eye.h && top + b.h > eye.y;
-  }
-  ["patch", "shades", "goggles", "monocle", "visor"].forEach(function (id) {
-    var kit = Dino.createPowerKit();
-    Dino.applyEffect(kit, id);
-    var stand = Dino.sideGear(kit, 0, 0, false).cosmetics.filter(function (c) { return c.id === id; })[0];
-    var duck = Dino.sideGear(kit, 0, 0, true).cosmetics.filter(function (c) { return c.id === id; })[0];
-    assert.ok(stand, id);
-    assert.ok(overlaps(stand, "wait"), id + " em pé fora do olho");
-    assert.ok(overlaps(duck, "duck1"), id + " agachado fora do olho");
-  });
-});
-
-test("chapéu fica acima da cabeça e osso na boca", function () {
-  var kit = Dino.createPowerKit();
-  Dino.applyEffect(kit, "cowboy");
-  Dino.applyEffect(kit, "bone");
-  var gear = Dino.sideGear(kit, 0, 0, false);
-  var head = Dino.trexParts("wait").head;
-  var cowboy = gear.cosmetics.filter(function (c) { return c.id === "cowboy"; })[0];
-  var bone = gear.cosmetics.filter(function (c) { return c.id === "bone"; })[0];
-  assert.ok(cowboy.y + 5 <= head.y + head.h * 0.45, "chapéu baixo demais");
-  assert.ok(bone.x > head.x + head.w * 0.55, "osso longe do focinho");
-});
-
-test("há 50 cosméticos visuais com slot e atributo", function () {
-  var cosmetics = Dino.EFFECTS.filter(function (e) { return e.slot; });
-  assert.ok(cosmetics.length >= 50);
-  cosmetics.forEach(function (e) {
-    assert.ok(e.slot, "falta slot " + e.id);
-    assert.ok(e.stats && Object.keys(e.stats).length, "falta stats " + e.id);
-  });
-});
-
-test("cosmético acumula pilha, atributo e aparece no corpo", function () {
-  var kit = Dino.createPowerKit();
-  Dino.applyEffect(kit, "cape");
-  Dino.applyEffect(kit, "cape");
-  Dino.applyEffect(kit, "shades");
-  assert.equal(Dino.effectCount(kit, "cape"), 2);
-  assert.equal(Dino.effectCount(kit, "shades"), 1);
-  assert.ok(Dino.rpgStats(kit).jump > 1);
-  var gear = Dino.sideGear(kit, 50, 93, false);
-  assert.ok(gear.cosmetics.some(function (c) { return c.id === "cape"; }));
-  assert.ok(gear.cosmetics.some(function (c) { return c.id === "shades"; }));
-  var duck = Dino.sideGear(kit, 50, 93, true);
-  var capeStand = gear.cosmetics.filter(function (c) { return c.id === "cape"; })[0];
-  var capeDuck = duck.cosmetics.filter(function (c) { return c.id === "cape"; })[0];
-  assert.ok(capeDuck.y > capeStand.y);
-});
-
-test("acessórios ancoram nas partes ao agachar", function () {
-  var kit = Dino.createPowerKit();
-  Dino.applyEffect(kit, "hat");
-  Dino.applyEffect(kit, "skate");
-  Dino.applyEffect(kit, "sword");
-  var stand = Dino.sideGear(kit, 50, 93, false);
-  var duck = Dino.sideGear(kit, 50, 93, true);
-  var head = Dino.trexParts("duck1").head;
-  var feet = Dino.trexParts("duck1").feet;
-  assert.ok(duck.hats[0].y >= 93 + head.y - 10);
-  assert.ok(duck.hats[0].y <= 93 + head.y + 2);
-  assert.ok(duck.skates[0].y >= 93 + feet.y - 4);
-  assert.ok(duck.skates[0].y <= 93 + feet.y + 4);
-  assert.ok(duck.sword.x > stand.sword.x);
-  assert.ok(duck.hats[0].y > stand.hats[0].y);
 });

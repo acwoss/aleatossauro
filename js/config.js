@@ -53,6 +53,7 @@
     pickupScoreScale: 2000,
     pickupScoreMin: 400,
     hiddenLuck: 0.01,
+    biomeInterval: 2000,
     bossScoreInterval: 5000,
     choiceIframes: 3000,
     hurtFlashMs: 480,
@@ -93,6 +94,60 @@
     rock: "#7a6a55"
   };
 
+  var SNOW_DAY = {
+    sky: "#eaf4fc",
+    sand: "#f7fbff",
+    ground: "#c5d0dc",
+    cloud: "#ffffff",
+    cactus: "#4a7c52",
+    ptero: "#7a658c",
+    hud: "#2a3a4c",
+    fauna: ["#8aa4b8", "#b8c4ce", "#6a8aa0", "#9aa8b4"],
+    faunaDead: "#c5d0dc",
+    rock: "#a8b4c0"
+  };
+
+  var SNOW_NIGHT = {
+    sky: "#8eb0cc",
+    sand: "#d8e4f0",
+    ground: "#7a8ea0",
+    cloud: "#f4f8fc",
+    cactus: "#6d9e78",
+    ptero: "#a888c4",
+    hud: "#1e3040",
+    fauna: ["#6d8ea3", "#a8b8c4", "#5b84a3", "#8a9aa8"],
+    faunaDead: "#7a8ea0",
+    rock: "#6a7888"
+  };
+
+  var WATER_DAY = {
+    sky: "#3aa0c8",
+    sand: "#2a7084",
+    ground: "#1a5468",
+    cloud: "#d4f0fa",
+    cactus: "#1e8a58",
+    ptero: "#1a4a48",
+    hud: "#0e2832",
+    fauna: ["#1a6b5c", "#3a8a9a", "#2c5f7c", "#4a7068"],
+    faunaDead: "#3a5a58",
+    rock: "#d46a78",
+    nest: "#5a3a22",
+    egg: "#e8d9b0"
+  };
+
+  var WATER_NIGHT = {
+    sky: "#0a2838",
+    sand: "#123848",
+    ground: "#0c2834",
+    cloud: "#7ab8c8",
+    cactus: "#2d8a6e",
+    ptero: "#1a3a38",
+    hud: "#d4eef4",
+    fauna: ["#2a6b68", "#3a7a8a", "#1c4a5c", "#3a5858"],
+    faunaDead: "#1a3438",
+    rock: "#a05060"
+  };
+
   var NIGHT = {
     sky: "#152238",
     sand: "#2a2438",
@@ -120,8 +175,35 @@
     rock: "#4a4250"
   };
 
-  Dino.palette = function (night) {
-    return night ? NIGHT : DAY;
+  function extend(base, extra, biome) {
+    var out = {};
+    var k;
+    for (k in base) {
+      if (Object.prototype.hasOwnProperty.call(base, k)) out[k] = base[k];
+    }
+    if (extra) {
+      for (k in extra) {
+        if (Object.prototype.hasOwnProperty.call(extra, k)) out[k] = extra[k];
+      }
+    }
+    out.biome = biome || "desert";
+    return out;
+  }
+
+  Dino.biomeAt = function (actualScore) {
+    var interval = (Dino.Config && Dino.Config.biomeInterval) || 2000;
+    var band = Math.floor(Math.max(0, actualScore || 0) / interval) % 3;
+    if (band === 1) return "snow";
+    if (band === 2) return "water";
+    return "desert";
+  };
+
+  Dino.palette = function (night, biome) {
+    biome = biome || "desert";
+    var base = night ? NIGHT : DAY;
+    if (biome === "snow") return extend(base, night ? SNOW_NIGHT : SNOW_DAY, "snow");
+    if (biome === "water") return extend(base, night ? WATER_NIGHT : WATER_DAY, "water");
+    return extend(base, null, "desert");
   };
   if (typeof module !== "undefined" && module.exports) {
     module.exports = Dino;
