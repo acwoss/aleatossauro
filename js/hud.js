@@ -465,6 +465,22 @@
     ctx.restore();
   };
 
+  Dino.drawHurtVignette = function (ctx, w, h, alpha) {
+    var g;
+    var inner;
+    var outer;
+    if (!ctx || !w || !h || alpha <= 0) return;
+    if (typeof ctx.createRadialGradient !== "function") return;
+    inner = Math.min(w, h) * 0.22;
+    outer = Math.max(w, h) * 0.72;
+    g = ctx.createRadialGradient(w / 2, h / 2, inner, w / 2, h / 2, outer);
+    g.addColorStop(0, "rgba(200,12,24,0)");
+    g.addColorStop(0.45, "rgba(200,12,24,0)");
+    g.addColorStop(1, "rgba(200,12,24," + (Math.min(1, alpha) * 0.9) + ")");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+  };
+
   Dino.Hud = Hud;
 
   if (typeof module !== "undefined" && module.exports) {

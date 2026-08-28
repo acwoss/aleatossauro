@@ -74,21 +74,54 @@
     return skin;
   };
 
-  Dino.drawSkinnedRects = function (ctx, rects, ox, oy, skin, fallback) {
+  Dino.skinSample = function (skin, pose, x, y) {
+    var fallback = (skin && skin.fallback) || "#2d6a3f";
+    var cells = skin && skin.cells;
+    var part;
+    var dest;
+    var src;
+    var u;
+    var v;
+    var sx;
+    var sy;
+    var key;
+    if (!cells) return fallback;
+    key = x + "," + y;
+    if (!pose || pose === "wait" || typeof Dino.trexPartAt !== "function") {
+      return cells[key] || fallback;
+    }
+    part = Dino.trexPartAt(pose, x, y);
+    if (!part) return cells[key] || fallback;
+    dest = Dino.trexParts(pose)[part];
+    src = Dino.trexParts("wait")[part];
+    if (!dest || !src || !dest.w || !dest.h) return cells[key] || fallback;
+    u = (x - dest.x + 0.5) / dest.w;
+    v = (y - dest.y + 0.5) / dest.h;
+    if (u < 0) u = 0;
+    if (v < 0) v = 0;
+    if (u > 0.999) u = 0.999;
+    if (v > 0.999) v = 0.999;
+    sx = Math.floor(src.x + u * src.w);
+    sy = Math.floor(src.y + v * src.h);
+    return cells[sx + "," + sy] || cells[key] || fallback;
+  };
+
+  Dino.drawSkinnedRects = function (ctx, rects, ox, oy, skin, fallback, pose) {
     var i;
     var r;
     var x;
     var y;
     var color;
-    var cells = skin && skin.cells;
     fallback = fallback || (skin && skin.fallback) || "#2d6a3f";
     rects = rects || [];
     for (i = 0; i < rects.length; i++) {
       r = rects[i];
       for (y = 0; y < r.h; y++) {
         for (x = 0; x < r.w; x++) {
-          color =
-            (cells && cells[r.x + x + "," + (r.y + y)]) || fallback;
+          color = Dino.skinSample
+            ? Dino.skinSample(skin, pose, r.x + x, r.y + y)
+            : fallback;
+          if (!color) color = fallback;
           ctx.fillStyle = color;
           ctx.fillRect(ox + r.x + x, oy + r.y + y, 1, 1);
         }
@@ -99,17 +132,25 @@
   Dino.paintStudioLayout = function (layout) {
     layout = layout || {};
     var scale = layout.scale || 1;
-    var sky = Math.max(
+    var hudH = Math.max(
       90,
-      ((layout.offsetY || 0) - (layout.hudOffsetY || 8)) / scale
+      ((layout.offsetY || 0) - (layout.hudOffsetY || 8)) / scale +
+        (layout.viewHeight || Dino.DEFAULT_HEIGHT || 150)
     );
     var width = layout.logicalWidth || 600;
     var mask = Dino.trexPaintMask();
     var gw = mask.w || 44;
     var gh = mask.h || 47;
-    var overhead = 52;
-    var footer = 42;
-    var cell = Dino.clamp(Math.floor((sky - overhead - footer) / gh), 1, 6);
+    var overhead = 36;
+    var footer = 48;
+    var cell = Dino.clamp(
+      Math.min(
+        Math.floor((hudH - overhead - footer) / gh),
+        Math.floor((width - 16) / gw)
+      ),
+      4,
+      12
+    );
     var gridW = gw * cell;
     var gridH = gh * cell;
     var x0 = Math.round((width - gridW) / 2);
@@ -143,6 +184,8 @@
       h: gh,
       gridW: gridW,
       gridH: gridH,
+      width: width,
+      coverH: Math.max(hudH, btnY + 24),
       swatches: swatches,
       start: { x: btnX0, y: btnY, w: startW, h: 16, label: "Correr" },
       reset: {
@@ -200,9 +243,11 @@
     var s;
     palette = palette || {};
     skin = skin || Dino.createSkin(palette.dino);
-    gap = studio.cell > 1 ? 1 : 0;
+    gap = 0;
     ctx.save();
-    ctx.fillStyle = palette.hud || "#1e3a4c";
+    ctx.fillStyle = "#071018";
+    ctx.fillRect(0, 0, studio.width || 600, studio.coverH || studio.y0 + studio.gridH + 48);
+    ctx.fillStyle = "#d6e4ee";
     ctx.font = "bold 9px Courier New, monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -221,6 +266,31 @@
         studio.cell - gap,
         studio.cell - gap
       );
+    }
+    if (typeof Dino.trexParts === "function") {
+      var body = Dino.trexParts("wait");
+      var name;
+      var box;
+      var labels = Dino.TREX_PART_LABELS || {};
+      ctx.strokeStyle = "#3d5a6c";
+      ctx.lineWidth = 1;
+      ctx.font = "6px Courier New, monospace";
+      ctx.fillStyle = "#8fb0c4";
+      for (name in body) {
+        if (!body.hasOwnProperty(name)) continue;
+        box = body[name];
+        ctx.strokeRect(
+          studio.x0 + box.x * studio.cell + 0.5,
+          studio.y0 + box.y * studio.cell + 0.5,
+          box.w * studio.cell - 1,
+          box.h * studio.cell - 1
+        );
+        ctx.fillText(
+          labels[name] || name,
+          studio.x0 + (box.x + box.w / 2) * studio.cell,
+          studio.y0 + (box.y + box.h / 2) * studio.cell
+        );
+      }
     }
     for (i = 0; i < studio.swatches.length; i++) {
       s = studio.swatches[i];

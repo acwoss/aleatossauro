@@ -146,3 +146,25 @@ test("HUD desenha atributos e ícones, não a lista de nomes", function () {
     0
   );
 });
+
+test("vignette de dano é um degradê vermelho nas bordas", function () {
+  var stops = [];
+  var rects = [];
+  var grad = {
+    addColorStop: function (t, c) { stops.push({ t: t, c: c }); }
+  };
+  var ctx = {
+    createRadialGradient: function (x0, y0, r0, x1, y1, r1) {
+      grad.r0 = r0;
+      grad.r1 = r1;
+      return grad;
+    },
+    fillRect: function (x, y, w, h) { rects.push({ x: x, y: y, w: w, h: h, c: ctx.fillStyle }); },
+    fillStyle: ""
+  };
+  Dino.drawHurtVignette(ctx, 800, 600, 1);
+  assert.ok(grad.r1 > grad.r0);
+  assert.ok(stops.length >= 2);
+  assert.ok(stops[stops.length - 1].c.indexOf("255") !== -1 || stops[stops.length - 1].c.indexOf("200") !== -1 || stops[stops.length - 1].c.indexOf("180") !== -1);
+  assert.deepEqual(rects[0], { x: 0, y: 0, w: 800, h: 600, c: grad });
+});

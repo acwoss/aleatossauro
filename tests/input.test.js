@@ -88,6 +88,23 @@ test("seta esquerda fica pressionada até o keyup", function () {
   assert.equal(input.consume().left, false);
 });
 
+test("mousedown e mousemove mantêm hold para pintar", function () {
+  var el = fakeEl();
+  var input = Dino.createInput();
+  input.attach(el);
+  el.fire("mousedown", { button: 0, clientX: 10, clientY: 20, preventDefault: function () {} });
+  var a = input.consume();
+  assert.equal(a.holdClientX, 10);
+  assert.equal(a.holdClientY, 20);
+  el.fire("mousemove", { clientX: 40, clientY: 22, preventDefault: function () {} });
+  var b = input.consume();
+  assert.equal(b.holdClientX, 40);
+  el.fire("mouseup", { button: 0, clientX: 40, clientY: 22, preventDefault: function () {} });
+  var c = input.consume();
+  assert.equal(c.pointer.clientX, 40);
+  assert.equal(c.holdClientX, null);
+});
+
 test("Ctrl dispara ataque, não pulo", function () {
   var el = fakeEl();
   var input = Dino.createInput();

@@ -40,7 +40,7 @@ test("drawSkinnedRects usa a cor pintada no pixel", function () {
 test("estúdio de pintura acerta célula, swatch e botão", function () {
   var layout = Dino.computeLayout(1920, 1080);
   var studio = Dino.paintStudioLayout(layout);
-  assert.ok(studio.cell >= 1);
+  assert.ok(studio.cell >= 4);
   assert.ok(studio.swatches.length >= 8);
   var cell = Dino.hitPaintTarget(
     { x: studio.x0 + 20 * studio.cell + studio.cell / 2, y: studio.y0 + 2 * studio.cell + studio.cell / 2 },
@@ -58,6 +58,68 @@ test("estúdio de pintura acerta célula, swatch e botão", function () {
     studio
   );
   assert.equal(go.type, "start");
+});
+
+test("partes do dino nomeiam olho cabeça tronco braço pernas e pés", function () {
+  var wait = Dino.trexParts("wait");
+  ["eye", "head", "torso", "arm", "legs", "feet"].forEach(function (name) {
+    assert.ok(wait[name] && wait[name].w > 0 && wait[name].h > 0, name);
+  });
+  assert.equal(Dino.trexPartAt("wait", 22, 4), "eye");
+  assert.equal(Dino.trexPartAt("wait", 20, 2), "head");
+  assert.equal(Dino.trexPartAt("wait", 18, 22), "arm");
+  assert.equal(Dino.trexPartAt("wait", 18, 36), "legs");
+  assert.equal(Dino.trexPartAt("wait", 18, 44), "feet");
+  assert.equal(Dino.trexPartAt("duck1", 34, 22), "eye");
+  assert.equal(Dino.trexPartAt("duck1", 33, 19), "head");
+  assert.equal(Dino.trexPartAt("duck1", 16, 43), "feet");
+});
+
+test("agachar amostra a pintura da mesma parte em espera", function () {
+  var skin = Dino.createSkin("#2d6a3f");
+  Dino.paintSkin(skin, 22, 4, "#ffffff");
+  Dino.paintSkin(skin, 20, 2, "#e74c3c");
+  Dino.paintSkin(skin, 18, 44, "#111111");
+  assert.equal(Dino.skinSample(skin, "wait", 22, 4), "#ffffff");
+  assert.equal(Dino.skinSample(skin, "duck1", 34, 22), "#ffffff");
+  assert.equal(Dino.skinSample(skin, "duck1", 32, 20), "#e74c3c");
+  assert.equal(Dino.skinSample(skin, "duck1", 16, 43), "#111111");
+});
+
+test("estúdio pinta fundo escuro e rotula as partes", function () {
+  var layout = Dino.computeLayout(1920, 1080);
+  var studio = Dino.paintStudioLayout(layout);
+  var fills = [];
+  var texts = [];
+  var ctx = {
+    save: function () {},
+    restore: function () {},
+    fillRect: function (x, y, w, h) {
+      fills.push({ x: x, y: y, w: w, h: h, c: ctx.fillStyle });
+    },
+    strokeRect: function () {},
+    fillText: function (t) { texts.push(t); },
+    fillStyle: "",
+    strokeStyle: "",
+    lineWidth: 1,
+    font: "",
+    textAlign: "",
+    textBaseline: "",
+    globalAlpha: 1
+  };
+  Dino.drawPaintStudio(ctx, studio, Dino.createSkin("#2d6a3f"), "#2d6a3f", { sky: "#87ceeb", hud: "#1e3a4c" });
+  assert.ok(fills[0].w >= studio.gridW);
+  assert.ok(fills[0].h >= studio.gridH);
+  assert.equal(fills[0].c, "#071018");
+  ["olho", "cabeça", "tronco", "braço", "pernas", "pés"].forEach(function (label) {
+    assert.ok(texts.indexOf(label) !== -1, label);
+  });
+  assert.ok(fills.some(function (f) {
+    return f.w === studio.cell && f.h === studio.cell;
+  }));
+  assert.ok(!fills.some(function (f) {
+    return f.w === studio.cell - 1 && f.h === studio.cell - 1;
+  }));
 });
 
 test("skin serializa e volta do storage", function () {

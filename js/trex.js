@@ -261,7 +261,7 @@
       );
     }
     if (this.skin && typeof Dino.drawSkinnedRects === "function") {
-      Dino.drawSkinnedRects(ctx, rects, this.xPos, this.yPos, this.skin, body);
+      Dino.drawSkinnedRects(ctx, rects, this.xPos, this.yPos, this.skin, body, name);
     } else {
       Dino.drawRects(ctx, rects, this.xPos, this.yPos, body);
     }

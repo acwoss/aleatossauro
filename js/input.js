@@ -17,6 +17,7 @@
     var leftKey = false;
     var rightKey = false;
     var touchHold = null;
+    var mouseHold = false;
     var fireQueued = false;
     var attackEl = null;
 
@@ -111,9 +112,24 @@
       touchHold = { clientX: t.clientX, clientY: t.clientY };
     }
 
+    function onMouseDown(ev) {
+      if (ev.button != null && ev.button !== 0) return;
+      prevent(ev);
+      mouseHold = true;
+      touchHold = { clientX: ev.clientX, clientY: ev.clientY };
+    }
+
+    function onMouseMove(ev) {
+      if (!mouseHold) return;
+      prevent(ev);
+      touchHold = { clientX: ev.clientX, clientY: ev.clientY };
+    }
+
     function onMouseUp(ev) {
       prevent(ev);
       pointer = { clientX: ev.clientX, clientY: ev.clientY };
+      mouseHold = false;
+      if (touchId === null) touchHold = null;
     }
 
     function onTouchEnd(ev) {
@@ -151,7 +167,13 @@
         el.addEventListener("touchstart", onTouchStart, { passive: false });
         el.addEventListener("touchmove", onTouchMove, { passive: false });
         el.addEventListener("touchend", onTouchEnd, { passive: false });
-        el.addEventListener("mouseup", onMouseUp);
+        el.addEventListener("mousedown", onMouseDown);
+        keyTarget.addEventListener("mousemove", onMouseMove);
+        keyTarget.addEventListener("mouseup", onMouseUp);
+        if (keyTarget !== el) {
+          el.addEventListener("mousemove", onMouseMove);
+          el.addEventListener("mouseup", onMouseUp);
+        }
         if (attackEl) {
           attackEl.addEventListener("click", onAttack);
           attackEl.addEventListener("touchstart", onAttack, { passive: false });
@@ -165,7 +187,13 @@
         el.removeEventListener("touchstart", onTouchStart);
         el.removeEventListener("touchmove", onTouchMove);
         el.removeEventListener("touchend", onTouchEnd);
-        el.removeEventListener("mouseup", onMouseUp);
+        el.removeEventListener("mousedown", onMouseDown);
+        keyTarget.removeEventListener("mousemove", onMouseMove);
+        keyTarget.removeEventListener("mouseup", onMouseUp);
+        if (keyTarget !== el) {
+          el.removeEventListener("mousemove", onMouseMove);
+          el.removeEventListener("mouseup", onMouseUp);
+        }
         if (attackEl) {
           attackEl.removeEventListener("click", onAttack);
           attackEl.removeEventListener("touchstart", onAttack);
@@ -193,7 +221,9 @@
           right: rightKey,
           firePressed: fire,
           touchClientX: touchHold ? touchHold.clientX : null,
-          touchClientY: touchHold ? touchHold.clientY : null
+          touchClientY: touchHold ? touchHold.clientY : null,
+          holdClientX: touchHold ? touchHold.clientX : null,
+          holdClientY: touchHold ? touchHold.clientY : null
         };
       }
     };

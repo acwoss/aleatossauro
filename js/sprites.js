@@ -364,6 +364,100 @@
     Dino.Sprites.digit9
   ];
 
+  function partBox(x, y, w, h) {
+    return { x: x, y: y, w: w, h: h };
+  }
+
+  var waitParts = {
+    eye: partBox(22, 4, 3, 3),
+    head: partBox(20, 0, 24, 16),
+    torso: partBox(0, 16, 38, 16),
+    arm: partBox(18, 22, 10, 3),
+    legs: partBox(16, 32, 12, 12),
+    feet: partBox(18, 44, 10, 3)
+  };
+
+  function overlayParts(extra) {
+    var out = {};
+    var key;
+    for (key in waitParts) {
+      out[key] = extra[key] || waitParts[key];
+    }
+    return out;
+  }
+
+  Dino.TREX_PART_ORDER = ["eye", "feet", "arm", "legs", "head", "torso"];
+  Dino.TREX_PART_LABELS = {
+    eye: "olho",
+    head: "cabeça",
+    torso: "tronco",
+    arm: "braço",
+    legs: "pernas",
+    feet: "pés"
+  };
+  Dino.TREX_PARTS = {
+    wait: waitParts,
+    blink: overlayParts({ eye: partBox(22, 6, 8, 2) }),
+    run1: overlayParts({
+      legs: partBox(12, 32, 22, 12),
+      feet: partBox(12, 44, 10, 3)
+    }),
+    run2: overlayParts({
+      legs: partBox(10, 32, 18, 12),
+      feet: partBox(20, 44, 10, 3)
+    }),
+    jump: overlayParts({
+      legs: partBox(12, 32, 26, 10),
+      feet: partBox(12, 38, 8, 4)
+    }),
+    skate: overlayParts({
+      legs: partBox(16, 32, 14, 10),
+      feet: partBox(16, 42, 14, 3)
+    }),
+    crash: overlayParts({ eye: partBox(24, 4, 8, 6) }),
+    duck1: {
+      eye: partBox(34, 22, 3, 3),
+      head: partBox(32, 18, 27, 14),
+      torso: partBox(0, 24, 36, 14),
+      arm: partBox(14, 28, 12, 4),
+      legs: partBox(18, 36, 22, 6),
+      feet: partBox(16, 42, 8, 5)
+    },
+    duck2: {
+      eye: partBox(34, 22, 3, 3),
+      head: partBox(32, 18, 27, 14),
+      torso: partBox(0, 24, 36, 14),
+      arm: partBox(14, 28, 12, 4),
+      legs: partBox(12, 36, 22, 6),
+      feet: partBox(24, 42, 8, 5)
+    }
+  };
+
+  Dino.trexParts = function (pose) {
+    return Dino.TREX_PARTS[pose] || Dino.TREX_PARTS.wait;
+  };
+
+  Dino.trexPartAt = function (pose, x, y) {
+    var parts = Dino.trexParts(pose);
+    var i;
+    var name;
+    var b;
+    for (i = 0; i < Dino.TREX_PART_ORDER.length; i++) {
+      name = Dino.TREX_PART_ORDER[i];
+      b = parts[name];
+      if (b && x >= b.x && y >= b.y && x < b.x + b.w && y < b.y + b.h) return name;
+    }
+    return null;
+  };
+
+  Dino.trexPartPoint = function (pose, name, ux, uy) {
+    var b = Dino.trexParts(pose)[name];
+    if (!b) b = Dino.TREX_PARTS.wait[name];
+    ux = ux == null ? 0.5 : ux;
+    uy = uy == null ? 0.5 : uy;
+    return { x: b.x + ux * b.w, y: b.y + uy * b.h };
+  };
+
   if (typeof module !== "undefined" && module.exports) {
     module.exports = Dino;
   }

@@ -2,6 +2,7 @@ var test = require("node:test");
 var assert = require("node:assert/strict");
 require("../js/config.js");
 require("../js/collision.js");
+require("../js/sprites.js");
 var Dino = require("../js/powerups.js");
 
 test("há pelo menos 25 efeitos sorteáveis", function () {
@@ -331,6 +332,13 @@ test("canAttack só com arma ou blaster", function () {
   assert.equal(Dino.canAttack(kit), true);
 });
 
+test("imunidade após evolução é inteligência/2 em segundos", function () {
+  var kit = Dino.createPowerKit();
+  assert.equal(Dino.evolutionImmuneMs(kit), 500);
+  Dino.applyEffect(kit, "coffee");
+  assert.equal(Dino.evolutionImmuneMs(kit), 2000);
+});
+
 test("rpgStats parte de força 1, vel 6, vida 1, pulo 1 e int 1", function () {
   var s = Dino.rpgStats(Dino.createPowerKit());
   assert.equal(s.str, 1);
@@ -420,4 +428,21 @@ test("cosmético acumula pilha, atributo e aparece no corpo", function () {
   var capeStand = gear.cosmetics.filter(function (c) { return c.id === "cape"; })[0];
   var capeDuck = duck.cosmetics.filter(function (c) { return c.id === "cape"; })[0];
   assert.ok(capeDuck.y > capeStand.y);
+});
+
+test("acessórios ancoram nas partes ao agachar", function () {
+  var kit = Dino.createPowerKit();
+  Dino.applyEffect(kit, "hat");
+  Dino.applyEffect(kit, "skate");
+  Dino.applyEffect(kit, "sword");
+  var stand = Dino.sideGear(kit, 50, 93, false);
+  var duck = Dino.sideGear(kit, 50, 93, true);
+  var head = Dino.trexParts("duck1").head;
+  var feet = Dino.trexParts("duck1").feet;
+  assert.ok(duck.hats[0].y >= 93 + head.y - 10);
+  assert.ok(duck.hats[0].y <= 93 + head.y + 2);
+  assert.ok(duck.skates[0].y >= 93 + feet.y - 4);
+  assert.ok(duck.skates[0].y <= 93 + feet.y + 4);
+  assert.ok(duck.sword.x > stand.sword.x);
+  assert.ok(duck.hats[0].y > stand.hats[0].y);
 });

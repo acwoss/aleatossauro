@@ -55,6 +55,8 @@
           ? Dino.createSkin("#2d6a3f")
           : null;
     this.paintColor = (this.skin && this.skin.fallback) || "#2d6a3f";
+    this.paintLast = null;
+    this.hurtFlashMs = 0;
     this.tRex.skin = this.skin;
     Dino.syncTrexFromKit(this.tRex, this.kit);
   }
@@ -94,11 +96,17 @@
     this.fight = null;
     this.hud.boss = null;
     this.immuneMs = 0;
+    this.hurtFlashMs = 0;
     this.attackCd = 0;
     this.status = "RUNNING";
   };
 
+  Game.prototype.pulseHurt = function () {
+    this.hurtFlashMs = (Dino.Config && Dino.Config.hurtFlashMs) || 480;
+  };
+
   Game.prototype.crash = function (now) {
+    this.pulseHurt();
     this.status = "CRASHED";
     this.crashedAt = now;
     this.tRex.crash();
@@ -188,7 +196,7 @@
     this.hud.announce(effect.label);
     this.choice = null;
     this.hud.choice = null;
-    this.immuneMs = Dino.Config.choiceIframes;
+    this.immuneMs = Dino.evolutionImmuneMs(this.kit);
     if (effect.id === "star") this.immuneMs += 1500;
     this.status = "RUNNING";
   };
@@ -252,6 +260,7 @@
       return true;
     }
     this.immuneMs = 700;
+    this.pulseHurt();
     return false;
   };
 
@@ -438,13 +447,39 @@
     var hit;
     var local;
     input = input || {};
+    function paintLine(x0, y0, x1, y1) {
+      var dx = Math.abs(x1 - x0);
+      var dy = Math.abs(y1 - y0);
+      var sx = x0 < x1 ? 1 : -1;
+      var sy = y0 < y1 ? 1 : -1;
+      var err = dx - dy;
+      var e2;
+      while (true) {
+        Dino.paintSkin(self.skin, x0, y0, self.paintColor);
+        if (x0 === x1 && y0 === y1) break;
+        e2 = 2 * err;
+        if (e2 > -dy) {
+          err -= dy;
+          x0 += sx;
+        }
+        if (e2 < dx) {
+          err += dx;
+          y0 += sy;
+        }
+      }
+    }
     function apply(clientX, clientY, isDrag) {
       if (!studio || typeof Dino.clientToHudLogical !== "function") return;
       local = Dino.clientToHudLogical(clientX, clientY, self.layout);
       hit = Dino.hitPaintTarget(local, studio);
       if (!hit) return;
       if (hit.type === "cell") {
-        Dino.paintSkin(self.skin, hit.x, hit.y, self.paintColor);
+        if (isDrag && self.paintLast) {
+          paintLine(self.paintLast.x, self.paintLast.y, hit.x, hit.y);
+        } else {
+          Dino.paintSkin(self.skin, hit.x, hit.y, self.paintColor);
+        }
+        self.paintLast = { x: hit.x, y: hit.y };
         used = true;
       } else if (hit.type === "swatch" && !isDrag) {
         self.paintColor = hit.color;
@@ -458,9 +493,16 @@
         self.finishPainting();
       }
     }
-    if (input.pointer) apply(input.pointer.clientX, input.pointer.clientY, false);
-    if (this.status === "PAINTING" && input.touchClientX != null) {
-      apply(input.touchClientX, input.touchClientY, true);
+    if (this.status === "PAINTING") {
+      if (input.holdClientX != null) {
+        apply(input.holdClientX, input.holdClientY, true);
+      } else if (input.touchClientX != null) {
+        apply(input.touchClientX, input.touchClientY, true);
+      }
+    }
+    if (input.pointer) apply(input.pointer.clientX, input.pointer.clientY, !!this.paintLast);
+    if (this.status === "PAINTING" && input.holdClientX == null && input.touchClientX == null) {
+      this.paintLast = null;
     }
     if (this.status === "PAINTING" && input.jumpPressed && !used) {
       this.finishPainting();
@@ -472,6 +514,9 @@
 
   Game.prototype.update = function (dt, now, input) {
     input = input || { jumpPressed: false, duck: false };
+    if (this.hurtFlashMs > 0) {
+      this.hurtFlashMs = Math.max(0, this.hurtFlashMs - dt);
+    }
     if (this.status === "PAINTING") {
       this.handlePainting(dt, input);
       return;
@@ -579,6 +624,7 @@
             this.currentSpeed = Math.max(Dino.Config.speed, this.currentSpeed - 0.7);
             front.remove = true;
             Dino.syncTrexFromKit(this.tRex, this.kit);
+            this.pulseHurt();
             continue;
           }
         }
@@ -587,6 +633,7 @@
           this.crash(now);
           return;
         }
+        this.pulseHurt();
         front.remove = true;
         Dino.syncTrexFromKit(this.tRex, this.kit);
         break;
@@ -701,6 +748,16 @@
         this.skin,
         this.paintColor,
         colors
+      );
+    }
+    if (this.hurtFlashMs > 0 && typeof Dino.drawHurtVignette === "function") {
+      var dur = (Dino.Config && Dino.Config.hurtFlashMs) || 480;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      Dino.drawHurtVignette(
+        ctx,
+        cssW * dpr,
+        cssH * dpr,
+        this.hurtFlashMs / dur
       );
     }
   };

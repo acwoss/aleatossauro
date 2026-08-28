@@ -3,6 +3,7 @@ var assert = require("node:assert/strict");
 require("../js/config.js");
 require("../js/collision.js");
 require("../js/sprites.js");
+require("../js/skin.js");
 require("../js/powerups.js");
 var Dino = require("../js/trex.js");
 
@@ -79,4 +80,28 @@ test("mini-rex fica com os pés no chão", function () {
   assert.ok(t.drawScale < 1);
   assert.equal(t.config.height, Dino.Config.trexHeight);
   assert.equal(Dino.drawFeetY(t), groundY + Dino.Config.trexHeight);
+});
+
+test("agachar desenha a pintura da cabeça e dos pés", function () {
+  var groundY = 150 - 47 - 10;
+  var t = new Dino.Trex(groundY);
+  t.skin = Dino.createSkin("#2d6a3f");
+  Dino.paintSkin(t.skin, 20, 2, "#e74c3c");
+  Dino.paintSkin(t.skin, 18, 44, "#111111");
+  t.setDuck(true);
+  var fills = [];
+  var ctx = {
+    save: function () {},
+    restore: function () {},
+    translate: function () {},
+    scale: function () {},
+    fillRect: function (x, y, w, h) {
+      fills.push({ x: x, y: y, c: ctx.fillStyle });
+    },
+    fillStyle: "",
+    globalAlpha: 1
+  };
+  t.draw(ctx, { dino: "#2d6a3f", balloon: ["#e74c3c"] });
+  assert.ok(fills.some(function (f) { return f.c === "#e74c3c"; }));
+  assert.ok(fills.some(function (f) { return f.c === "#111111"; }));
 });

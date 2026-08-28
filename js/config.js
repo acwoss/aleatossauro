@@ -51,6 +51,7 @@
     pickupScoreInterval: 200,
     bossScoreInterval: 5000,
     choiceIframes: 3000,
+    hurtFlashMs: 480,
     attackCooldown: 260,
     blasterInterval: 700,
     blasterAmmo: 6,

@@ -338,6 +338,11 @@
     };
   };
 
+  Dino.evolutionImmuneMs = function (kit) {
+    var intel = Dino.rpgStats(kit).int;
+    return (intel / 2) * 1000;
+  };
+
   Dino.statStacks = function (kit, id) {
     if (!kit) return 0;
     if (id === "blaster") return (kit.blaster || 0) > 0 ? 1 : 0;
@@ -505,26 +510,38 @@
   };
 
   Dino.cosmeticPos = function (slot, xPos, yPos, ducking, index) {
+    var pose = ducking ? "duck1" : "wait";
     var map = {
-      head: { x: 18, y: -9, duckX: 36, duckY: 8, dy: -4 },
-      snout: { x: 34, y: 6, duckX: 50, duckY: 20, dy: 1 },
-      back: { x: 0, y: 12, duckX: 6, duckY: 22, dy: 3 },
-      tail: { x: -6, y: 24, duckX: -2, duckY: 32, dy: 2 },
-      chest: { x: 16, y: 18, duckX: 22, duckY: 28, dy: 2 },
-      feet: { x: 14, y: 38, duckX: 18, duckY: 38, dy: 1 },
-      neck: { x: 12, y: 10, duckX: 26, duckY: 22, dy: 3 }
+      head: { part: "head", ux: 0.35, uy: -0.55 },
+      snout: { part: "head", ux: 0.92, uy: 0.38 },
+      back: { part: "torso", ux: 0.02, uy: -0.25 },
+      tail: { part: "torso", ux: -0.14, uy: 0.5 },
+      chest: { part: "torso", ux: 0.48, uy: 0.18 },
+      feet: { part: "feet", ux: 0.05, uy: 0.1 },
+      neck: { part: "head", ux: 0.08, uy: 0.9 }
     };
-    var m = map[slot] || map.chest;
+    var spec = map[slot] || map.chest;
+    var p =
+      typeof Dino.trexPartPoint === "function"
+        ? Dino.trexPartPoint(pose, spec.part, spec.ux, spec.uy)
+        : { x: spec.ux * 20, y: spec.uy * 20 };
     index = index || 0;
     return {
-      x: xPos + (ducking ? m.duckX : m.x),
-      y: yPos + (ducking ? m.duckY : m.y) + index * (m.dy || 2)
+      x: xPos + p.x,
+      y: yPos + p.y + index * (ducking ? 2 : 2)
     };
   };
 
   Dino.sideGear = function (kit, xPos, yPos, ducking) {
     kit = kit || {};
-    var bodyY = ducking ? 16 : 0;
+    var pose = ducking ? "duck1" : "wait";
+    function at(part, ux, uy) {
+      var p =
+        typeof Dino.trexPartPoint === "function"
+          ? Dino.trexPartPoint(pose, part, ux, uy)
+          : { x: 0, y: ducking ? 16 : 0 };
+      return { x: xPos + p.x, y: yPos + p.y };
+    }
     var gear = {
       wings: [],
       balloons: [],
@@ -537,57 +554,51 @@
       spear: null,
       cosmetics: []
     };
+    var i;
+    var n;
+    var p;
     if (kit.wings > 0) {
+      p = at("torso", 0.12, -0.1);
       gear.wings.push({
-        x: xPos + (ducking ? 10 : 4),
-        y: yPos + 14 + bodyY,
+        x: p.x,
+        y: p.y,
         scale: 1 + 0.28 * Math.max(0, kit.wings - 1)
       });
     }
-    var i;
-    var n = kit.balloon || 0;
+    n = kit.balloon || 0;
     for (i = 0; i < n; i++) {
+      p = at("torso", 0.18, -0.7);
       gear.balloons.push({
-        x: xPos + (ducking ? 14 : 8),
-        y: yPos + 4 + bodyY - i * 8,
+        x: p.x,
+        y: p.y - i * 8,
         color: i
       });
     }
     for (i = 0; i < (kit.skate || 0); i++) {
+      p = at("feet", 0.0, -0.4);
       gear.skates.push({
-        x: xPos + (ducking ? 12 : 8),
-        y: yPos + 42 + i * 5
+        x: p.x,
+        y: p.y + i * 5
       });
     }
     for (i = 0; i < (kit.hats || 0); i++) {
+      p = at("head", 0.15, -0.5);
       gear.hats.push({
-        x: xPos + (ducking ? 38 : 18),
-        y: yPos + (ducking ? 10 : -8) - i * 5
+        x: p.x,
+        y: p.y - i * 5
       });
     }
     if (kit.blaster > 0) {
-      gear.gun = {
-        x: xPos + (ducking ? 50 : 36),
-        y: yPos + (ducking ? 28 : 20)
-      };
+      gear.gun = at("head", 0.72, 1.15);
     }
     if (kit.shields > 0) {
-      gear.shield = {
-        x: xPos + (ducking ? 12 : 6),
-        y: yPos + (ducking ? 20 : 8)
-      };
+      gear.shield = at("torso", 0.12, -0.45);
     }
     if (kit.sword > 0) {
-      gear.sword = {
-        x: xPos + (ducking ? 48 : 34),
-        y: yPos + (ducking ? 18 : 16)
-      };
+      gear.sword = at("head", 0.62, 0.95);
     }
     if (kit.spear > 0) {
-      gear.spear = {
-        x: xPos + (ducking ? 46 : 32),
-        y: yPos + (ducking ? 22 : 18)
-      };
+      gear.spear = at("head", 0.58, 1.15);
     }
     if (Dino.EFFECTS) {
       var e;
@@ -666,11 +677,16 @@
   Dino.blasterMuzzle = function (tRex) {
     var s = tRex.drawScale || 1;
     var ducking = tRex.ducking;
+    var pose = ducking ? "duck1" : "wait";
     var face = tRex.facing || 1;
     var fx = tRex.xPos;
     var fy = Dino.drawFeetY(tRex);
-    var gx = face < 0 ? tRex.xPos - 10 : tRex.xPos + (ducking ? 68 : 54);
-    var gy = tRex.yPos + (ducking ? 31 : 23);
+    var p =
+      typeof Dino.trexPartPoint === "function"
+        ? Dino.trexPartPoint(pose, "head", 1.18, 1.2)
+        : { x: ducking ? 68 : 54, y: ducking ? 31 : 23 };
+    var gx = face < 0 ? tRex.xPos - 10 : tRex.xPos + p.x;
+    var gy = tRex.yPos + p.y;
     return {
       x: fx + (gx - fx) * s,
       y: fy + (gy - fy) * s,

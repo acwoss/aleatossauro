@@ -52,6 +52,25 @@ test("botão correr sai da pintura", function () {
   assert.equal(g.status, "RUNNING");
 });
 
+test("arrastar pinta vários quadradinhos", function () {
+  var g = Dino.createGameState({ innerWidth: 1920, innerHeight: 1080 });
+  var studio = Dino.paintStudioLayout(g.layout);
+  g.paintColor = "#e74c3c";
+  function client(cx, cy) {
+    return {
+      clientX: (studio.x0 + cx * studio.cell + studio.cell / 2) * g.layout.scale,
+      clientY: g.layout.hudOffsetY + (studio.y0 + cy * studio.cell + studio.cell / 2) * g.layout.scale
+    };
+  }
+  var a = client(20, 2);
+  var b = client(21, 2);
+  g.update(16, 0, { holdClientX: a.clientX, holdClientY: a.clientY });
+  g.update(16, 0, { holdClientX: b.clientX, holdClientY: b.clientY });
+  assert.equal(g.status, "PAINTING");
+  assert.equal(g.skin.cells["20,2"], "#e74c3c");
+  assert.equal(g.skin.cells["21,2"], "#e74c3c");
+});
+
 test("restart zera score e velocidade e mantém HI", function () {
   var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600 });
   g.distanceRan = 8000;
@@ -124,14 +143,28 @@ test("pegar ovo abre dois cards e só aplica a escolha", function () {
   assert.equal(g.choice, null);
 });
 
-test("escolher evolução deixa o dino imune por 3s", function () {
+test("escolher evolução deixa o dino imune proporcional à inteligência", function () {
   var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
   g.status = "CHOOSING";
-  g.choice = { options: [Dino.EFFECTS[0], Dino.EFFECTS[1]], selected: 0 };
+  g.choice = { options: [Dino.effectById("doubleJump"), Dino.effectById("heart")], selected: 0 };
   g.hud.choice = g.choice;
   g.applyChoice(0);
   assert.equal(g.status, "RUNNING");
-  assert.equal(g.immuneMs, 3000);
+  assert.equal(g.immuneMs, 500);
+  g.status = "CHOOSING";
+  g.choice = { options: [Dino.effectById("coffee"), Dino.effectById("sword")], selected: 0 };
+  g.hud.choice = g.choice;
+  g.applyChoice(0);
+  assert.equal(g.immuneMs, 2000);
+});
+
+test("estrela soma imunidade extra depois da evolução", function () {
+  var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
+  g.status = "CHOOSING";
+  g.choice = { options: [Dino.effectById("star"), Dino.effectById("heart")], selected: 0 };
+  g.hud.choice = g.choice;
+  g.applyChoice(0);
+  assert.equal(g.immuneMs, 1000 + 1500);
 });
 
 test("imune atravessa cacto sem crash e sem gastar escudo", function () {
@@ -193,6 +226,30 @@ test("com vida extra o cacto fere e não mata", function () {
   g.update(16, 1000, { jumpPressed: false, duck: false });
   assert.equal(g.status, "RUNNING");
   assert.ok(g.kit.hp >= 1);
+});
+
+test("tomar dano dispara flash vermelho que some com o tempo", function () {
+  var g = Dino.createGameState({ innerWidth: 800, innerHeight: 600, isMobile: false });
+  g.status = "RUNNING";
+  g.runningTime = 4000;
+  g.immuneMs = 0;
+  Dino.applyEffect(g.kit, "heart");
+  Dino.syncTrexFromKit(g.tRex, g.kit);
+  g.tRex.update(0, Dino.TrexStatus.RUNNING);
+  var cactusType = Dino.OBSTACLE_TYPES.filter(function (t) { return t.type === "cactusSmall"; })[0];
+  var cactus = new Dino.Obstacle(cactusType, g.tRex.xPos, 0.6, 6, false);
+  cactus.xPos = g.tRex.xPos + 8;
+  cactus.size = 1;
+  cactus.width = cactusType.width;
+  cactus.cloneCollisionBoxes();
+  g.obstacles = [cactus];
+  g.update(16, 1000, { jumpPressed: false, duck: false });
+  assert.equal(g.status, "RUNNING");
+  assert.ok(g.hurtFlashMs > 400);
+  var before = g.hurtFlashMs;
+  g.update(80, 1080, { jumpPressed: false, duck: false });
+  assert.ok(g.hurtFlashMs < before);
+  assert.ok(g.hurtFlashMs > 0);
 });
 
 test("imunidade acaba após 3s", function () {
